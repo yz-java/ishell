@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/html">
+        <file>xterm.html</file>
+        <file>qwebchannel.js</file>
+        <file>README.html</file>
+    </qresource>
+</RCC>

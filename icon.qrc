@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/close.png</file>
+        <file>icons/connect.png</file>
+        <file>icons/console.png</file>
+        <file>icons/folder.png</file>
+        <file>icons/manager.png</file>
+        <file>icons/save.png</file>
+        <file>icons/server.png</file>
+        <file>icons/welcome.png</file>
+        <file>icons/cancel.png</file>
+        <file>icons/refresh.png</file>
+    </qresource>
+</RCC>
