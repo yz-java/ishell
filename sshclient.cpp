@@ -105,12 +105,6 @@ bool SSHClient::open_channel(){
        close(sock);
        close_connect();
     }
-
-//    if (_raw_mode() != 0) {
-//        fprintf(stderr, "Failed to entered in raw mode\n");
-//        close(sock);
-//        close_connect();
-//    }
     return true;
 }
 

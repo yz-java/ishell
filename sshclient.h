@@ -12,11 +12,16 @@
 #include <stdlib.h>
 #include <stdlib.h>
 #include <libssh2.h>
-
 #include <QDebug>
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
+#else
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <libgen.h>
 #endif
 
 class SSHClient : public QThread
