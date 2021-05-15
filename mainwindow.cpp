@@ -14,16 +14,18 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle("ishell");
+//    setWindowFlags(Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint);
+
     QList<QScreen *> list_screen =  QGuiApplication::screens();  //多显示器
     QRect rect = list_screen.at(0)->geometry();
     setMinimumSize(800, 600);
 
-    int desktop_width = rect.width();
-    int desktop_height = rect.height();
-    setMaximumSize(desktop_width-200, desktop_height-200);
+//    int desktop_width = rect.width();
+//    int desktop_height = rect.height();
+//    setMaximumSize(desktop_width-200, desktop_height-200);
 //    rect=QRect(200,200,desktop_width-200,desktop_height-200);
 //    setGeometry(rect);
-    qDebug() << desktop_width <<desktop_height;
+//    qDebug() << desktop_width <<desktop_height;
 
     DBUtil::GetInstance()->init();
 

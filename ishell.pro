@@ -56,7 +56,7 @@ RESOURCES += \
     html.qrc \
     icon.qrc
 
-win32: LIBS += -L$$PWD/Libs/openssl/lib -L$$PWD/Libs/ssh2/lib/ -lws2_32 -llibssh2
+win32: LIBS += -L$$PWD/Libs/openssl/lib -L$$PWD/Libs/ssh2/lib/ -lws2_32 -llibssh2 -llibssl -llibcrypto
 
 INCLUDEPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include
 DEPENDPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include

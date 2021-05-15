@@ -56,10 +56,10 @@ bool SSHClient::openSession(){
 
 bool SSHClient::userauth(){
     qDebug() << "开始认证";
-    const char* un=username.toStdString().c_str();
+    std::string un=username.toStdString();
     if(authType==1){
-        const char* p=password.toStdString().c_str();
-        if (libssh2_userauth_password(session, un, p) != 0) {
+        std::string p=password.toStdString();
+        if (libssh2_userauth_password(session, un.data(), p.data()) != 0) {
                fprintf(stderr, "Failed to authenticate\n");
                close(sock);
                close_connect();
@@ -71,7 +71,7 @@ bool SSHClient::userauth(){
         std::string pkf=publicKeyPath.toStdString();
         std::string pvkf=privateKeyPath.toStdString();
         std::string pp=passPhrase.toStdString();
-        if (libssh2_userauth_publickey_fromfile(session, un,pkf.data(),pvkf.data(),pp.data()) != 0) {
+        if (libssh2_userauth_publickey_fromfile(session, un.data(),pkf.data(),pvkf.data(),pp.data()) != 0) {
                fprintf(stderr, "Failed to authenticate\n");
                close(sock);
                close_connect();

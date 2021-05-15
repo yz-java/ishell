@@ -56,15 +56,12 @@ void WebConsole::pageLoadFinished(bool flag){
     connect(sshClient,&SSHClient::authSuccess,[=](){
 
     });
-    connect(sshClient,&SSHClient::readChannelData,[&](char data){
+    connect(sshClient,&SSHClient::readChannelData,this,[&](char data){
         QString script;
         if(data==13){
            script="lineFeed()";
         }else{
-            QTextCodec * codec = QTextCodec::codecForName("utf-8");
-//            QString d=codec->toUnicode(&data);
-//            std::string df=&data;
-            QString d=QString::fromUtf8(&data);
+            QString d(data);
             script="term.write('"+d+"')";
         }
 
