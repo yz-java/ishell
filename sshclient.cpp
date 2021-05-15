@@ -1,29 +1,4 @@
-#include "sshclient.h"
-struct termios _saved_tio;
-int tio_saved = 0;
-static int _raw_mode(void)
-{
-    int rc;
-    struct termios tio;
-
-    rc = tcgetattr(fileno(stdin), &tio);
-    if (rc != -1) {
-        _saved_tio = tio;
-        tio_saved = 1;
-        cfmakeraw(&tio);
-        rc = tcsetattr(fileno(stdin), TCSADRAIN, &tio);
-    }
-
-    return rc;
-}
-
-static int _normal_mode(void)
-{
-    if (tio_saved)
-        return tcsetattr(fileno(stdin), TCSADRAIN, &_saved_tio);
-
-    return 0;
-}
+﻿#include "sshclient.h"
 
 SSHClient::SSHClient(QObject *parent)
 {
@@ -149,7 +124,6 @@ void SSHClient::close_channel(){
 void SSHClient::close_connect(){
     libssh2_session_disconnect(session, "Session Shutdown, Thank you for playing");
     libssh2_session_free(session);
-    _normal_mode();
     libssh2_exit();
 }
 

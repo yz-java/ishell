@@ -1,9 +1,14 @@
-#ifndef DBUTIL_H
+﻿#ifndef DBUTIL_H
 #define DBUTIL_H
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QDebug>
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
+
 class DBUtil
 {
 private:

@@ -1,8 +1,12 @@
-#ifndef CONSOLE_H
+﻿#ifndef CONSOLE_H
 #define CONSOLE_H
 
 #include <QWidget>
 #include "sshclient.h"
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 namespace Ui {
 class Console;

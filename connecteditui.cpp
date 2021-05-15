@@ -1,4 +1,4 @@
-#include "connecteditui.h"
+﻿#include "connecteditui.h"
 #include "ui_connecteditui.h"
 #include <QFileDialog>
 #include "db/connectdao.h"

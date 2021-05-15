@@ -1,6 +1,10 @@
-#ifndef CONFIRMDIALOG_H
+﻿#ifndef CONFIRMDIALOG_H
 #define CONFIRMDIALOG_H
 #include <QDialog>
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 class ConfirmDialog:public QDialog
 {

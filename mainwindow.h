@@ -1,4 +1,4 @@
-#ifndef MAINWINDOW_H
+﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
@@ -6,6 +6,10 @@
 #include "connectmanagerui.h"
 #include "welcome.h"
 #include <QWebEngineView>
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

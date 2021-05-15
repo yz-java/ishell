@@ -1,4 +1,4 @@
-#include "mylabel.h"
+﻿#include "mylabel.h"
 #include <QMessageBox>
 MyLabel::MyLabel(const QString & text,QWidget *parent) : QLabel(parent)
 {

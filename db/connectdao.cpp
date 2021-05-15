@@ -1,4 +1,4 @@
-#include "connectdao.h"
+﻿#include "connectdao.h"
 #include "dbutil.h"
 
 ConnectDao* ConnectDao::instance=NULL;

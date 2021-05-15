@@ -1,8 +1,12 @@
-#ifndef CONNECTDAO_H
+﻿#ifndef CONNECTDAO_H
 #define CONNECTDAO_H
 #include <QList>
 #include "connectinfo.h"
 #include <QSqlQuery>
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 class ConnectDao
 {

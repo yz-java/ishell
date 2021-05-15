@@ -1,13 +1,15 @@
-#ifndef WEBCONSOLE_H
+﻿#ifndef WEBCONSOLE_H
 #define WEBCONSOLE_H
 
 #include <QWidget>
 #include <QWebEngineView>
 #include "sshclient.h"
-#include "websocketclientwrapper.h"
 #include <QWebChannel>
-#include <QWebSocketServer>
 #include "connectinfo.h"
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 namespace Ui {
 class WebConsole;

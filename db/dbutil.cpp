@@ -1,4 +1,4 @@
-#include "dbutil.h"
+﻿#include "dbutil.h"
 #include <QDebug>
 
 DBUtil* DBUtil::m_pInstance=NULL;
@@ -44,7 +44,7 @@ void DBUtil::init(){
         sql_query.prepare(sql);
         sql_query.addBindValue(1);
         sql_query.addBindValue(0);
-        sql_query.addBindValue("默认组");
+        sql_query.addBindValue("默认组 ");
         sql_query.exec();
     }
 }

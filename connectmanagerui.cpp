@@ -1,4 +1,4 @@
-#include "connectmanagerui.h"
+﻿#include "connectmanagerui.h"
 #include "ui_connectmanagerui.h"
 #include "connecteditui.h"
 #include <QHBoxLayout>
@@ -16,6 +16,7 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
     ui(new Ui::ConnectManagerUI)
 {
     ui->setupUi(this);
+
     setWindowTitle("连接管理器");
 
     QVBoxLayout* rootlayout=new QVBoxLayout();
@@ -125,7 +126,7 @@ void ConnectManagerUI::popMenu(const QPoint& p){
         ConnectInfo info = ConnectDao::GetInstance()->getConnectInfo(id);
         QAction* addconnect;
         if(info.parentId==0){
-            addconnect=new QAction(QString::fromLocal8Bit("新增连接"),this);//新增连接
+            addconnect=new QAction("新增连接",this);//新增连接
             connect(addconnect, &QAction::triggered,[&](){
                 QString title="新增连接";
                 ConnectEditUI *connectEditUI=new ConnectEditUI(this,title);
@@ -140,7 +141,7 @@ void ConnectManagerUI::popMenu(const QPoint& p){
         QAction* connectWell;
 
         if(info.parentId!=0){
-            connectWell=new QAction(QString ::fromLocal8Bit("连接"),this);//连接
+            connectWell=new QAction("连接",this);//连接
             connect(connectWell, &QAction::triggered,[&](){
                 emit openSSHConnect(info);
             });
@@ -148,7 +149,7 @@ void ConnectManagerUI::popMenu(const QPoint& p){
 
 
         }
-        QAction* editWell=new QAction(QString ::fromLocal8Bit("编辑"),this);
+        QAction* editWell=new QAction("编辑",this);
         connect(editWell, &QAction::triggered,[&](){
             if(info.parentId==0){
                 ConfirmDialog* dialog=new ConfirmDialog(this,"请输入资源名称");
@@ -173,7 +174,7 @@ void ConnectManagerUI::popMenu(const QPoint& p){
         menu.addAction(editWell);
         QAction* deleteWell;
         if(info.id!=1){
-            deleteWell=new QAction(QString::fromLocal8Bit("删除"),this);//删除
+            deleteWell=new QAction("删除",this);//删除
             //在界面上删除该item
             connect(deleteWell, &QAction::triggered, [&](){
 

@@ -1,8 +1,13 @@
-#ifndef CONNECTEDITUI_H
+﻿#ifndef CONNECTEDITUI_H
 #define CONNECTEDITUI_H
 
 #include <QDialog>
 #include <connectinfo.h>
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
+
 namespace Ui {
 class ConnectEditUI;
 }

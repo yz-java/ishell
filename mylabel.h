@@ -1,7 +1,11 @@
-#ifndef MYLABEL_H
+﻿#ifndef MYLABEL_H
 #define MYLABEL_H
 #include <QLabel>
 #include <QMouseEvent>
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 class MyLabel:public QLabel
 {

@@ -1,4 +1,4 @@
-#ifndef CONNECTMANAGERUI_H
+﻿#ifndef CONNECTMANAGERUI_H
 #define CONNECTMANAGERUI_H
 
 #include <QDialog>
@@ -7,6 +7,10 @@
 #include <QTreeView>
 #include "connectinfo.h"
 #include "components/confirmdialog.h"
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 namespace Ui {
 class ConnectManagerUI;

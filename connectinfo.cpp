@@ -1,4 +1,4 @@
-#include "connectinfo.h"
+﻿#include "connectinfo.h"
 
 ConnectInfo::ConnectInfo()
 {

@@ -1,4 +1,4 @@
-#include "confirmdialog.h"
+﻿#include "confirmdialog.h"
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QPushButton>

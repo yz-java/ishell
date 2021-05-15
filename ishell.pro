@@ -22,8 +22,6 @@ SOURCES += \
     mylabel.cpp \
     sshclient.cpp \
     webconsole.cpp \
-    websocketclientwrapper.cpp \
-    websockettransport.cpp \
     welcome.cpp
 
 HEADERS += \
@@ -39,8 +37,6 @@ HEADERS += \
     mylabel.h \
     sshclient.h \
     webconsole.h \
-    websocketclientwrapper.h \
-    websockettransport.h \
     welcome.h
 
 FORMS += \
@@ -59,10 +55,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
     html.qrc \
     icon.qrc
-#-L$$PWD/Libs/openssl/lib/
-unix:!macx: LIBS += -L$$PWD/Libs/ssh2/lib64/  -lcrypto -lssl -lssh2
+
+win32: LIBS += -L$$PWD/Libs/openssl/lib -L$$PWD/Libs/ssh2/lib/ -lws2_32 -llibssh2
 
 INCLUDEPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include
 DEPENDPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include
 
-#unix:!macx: PRE_TARGETDEPS += $$PWD/Libs/ssh2/lib64/libssh2.a $$PWD/Libs/openssl/lib/libcrypto.a $$PWD/Libs/openssl/lib/libssl.a

@@ -1,25 +1,23 @@
-#ifndef SSHCLIENT_H
+﻿#ifndef SSHCLIENT_H
 #define SSHCLIENT_H
 
 #include <QThread>
 #include <QString>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <sys/types.h>
-#include <libgen.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <termios.h>
 #include <stdlib.h>
 #include <libssh2.h>
 
 #include <QDebug>
+
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 
 class SSHClient : public QThread
 {
@@ -72,8 +70,8 @@ private:
     LIBSSH2_POLLFD *fds = NULL;
 
     /* Struct winsize for term size */
-    struct winsize w_size;
-    struct winsize w_size_bck;
+//    struct winsize w_size;
+//    struct winsize w_size_bck;
 
     /* For select on stdin */
     fd_set set;
