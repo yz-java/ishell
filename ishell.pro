@@ -56,7 +56,7 @@ RESOURCES += \
     html.qrc \
     icon.qrc
 
-unix:!macx: LIBS += -L$$PWD/Libs/ssh2/lib64/  -lcrypto -lssl -lssh2
+win32: LIBS += -L$$PWD/Libs/ssh2/lib/ -L$$PWD/Libs/openssl/lib/ -lws2_32  -llibcrypto -llibssl -llibssh2
 
 INCLUDEPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include
 DEPENDPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include
