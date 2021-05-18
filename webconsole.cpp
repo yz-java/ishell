@@ -61,6 +61,12 @@ void WebConsole::ssh2connect(const QString& jsMsg){
     sshClient->pty_rows=rows;
     sshClient->start();
     connect(sshClient,SIGNAL(connectSuccess()),this,SLOT(connectSuccess()));
+
+    connect(sshClient,&SSHClient::errorMsg,this,[=](QString errMsg){
+        QMessageBox::warning(this,"错误提示",errMsg);
+        close();
+    });
+
     connect(sshClient,&SSHClient::authSuccess,this,[=](){
 
     });

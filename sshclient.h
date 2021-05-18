@@ -83,9 +83,9 @@ private:
 
     struct sockaddr_in sin;
 
-    LIBSSH2_SESSION *session;
+    LIBSSH2_SESSION *session=NULL;
 
-    LIBSSH2_CHANNEL *channel;
+    LIBSSH2_CHANNEL *channel=NULL;
 
     LIBSSH2_POLLFD *fds = NULL;
 
@@ -100,7 +100,7 @@ private:
 
 
 signals:
-//    void readChannelData(char* data);
+    void errorMsg(QString errMsg);
     void readChannelData(char data);
     void connectSuccess();
     void authSuccess();
