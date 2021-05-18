@@ -15,37 +15,39 @@ INCLUDE_DIRECTORIES(
   "./"
   "Libs/openssl/include"
   "Libs/ssh2/include"
-  "c:/boost/include"
 )
 
+LINK_DIRECTORIES(
+  "Libs/openssl/lib"
+  "Libs/ssh2/lib"
+)
+set(target_link_libraries_flag "crypto" "ssl" "ssh2")
 IF (WIN32)
-	MESSAGE(STATUS "Now is windows")
-  set(QT_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5")
-  set(Qt5_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5")
-  LINK_DIRECTORIES(
-    "Libs/openssl/lib"
-    "Libs/ssh2/lib"
-    "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/bin"
-  )
+  MESSAGE(STATUS "Now is windows")
+  set(executable_flag "WIN32")
+  set(target_link_libraries_flag "ws2_32" "libcrypto" "libssl" "libssh2")
+  MESSAGE(STATUS "target_link_libraries_flag ==> ${target_link_libraries_flag}")
+  
+  # set(QT_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5")
+  # set(Qt5_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5")
+  # set(Qt5Core_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Core")
+  # set(Qt5Gui_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Gui")
+  # set(Qt5Network_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Network")
+  # set(Qt5Positioning_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Positioning")
+  # set(Qt5PrintSupport_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5PrintSupport")
+  # set(Qt5Qml_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Qml")
+  # set(Qt5Quick_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Quick")
+  # set(Qt5WebChannel_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5WebChannel")
+  # set(Qt5WebEngineCore_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5WebEngineCore")
+  # set(Qt5WebEngineWidgets_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5WebEngineWidgets")
+  # set(Qt5Widgets_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Widgets")
+  # set(Qt5Sql_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Sql")
 ELSEIF (APPLE)
-    MESSAGE(STATUS "Now is Apple systens.")
+  MESSAGE(STATUS "Now is Apple systens.")
     
 ELSEIF (UNIX)
 	MESSAGE(STATUS "Now is UNIX-like OS's.")
 ENDIF ()
-
-set(Qt5Core_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Core")
-set(Qt5Gui_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Gui")
-set(Qt5Network_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Network")
-set(Qt5Positioning_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Positioning")
-set(Qt5PrintSupport_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5PrintSupport")
-set(Qt5Qml_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Qml")
-set(Qt5Quick_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Quick")
-set(Qt5WebChannel_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5WebChannel")
-set(Qt5WebEngineCore_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5WebEngineCore")
-set(Qt5WebEngineWidgets_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5WebEngineWidgets")
-set(Qt5Widgets_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Widgets")
-set(Qt5Sql_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5Sql")
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Sql WebChannel WebEngineWidgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Sql Widgets WebChannel WebEngineWidgets REQUIRED)
@@ -61,7 +63,7 @@ AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/components SRC_LIST_CPP)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/db SRC_LIST_CPP)
 
 ADD_EXECUTABLE(
-  ${PROJECT_NAME} 
+  ${PROJECT_NAME} ${executable_flag}
   ${SRC_LIST_CPP}
   ${UI_SOURCE_FILES}
   ${QRC_SOURCE_FILES}
@@ -75,8 +77,7 @@ target_link_libraries(
   Qt${QT_VERSION_MAJOR}::WebChannel 
   Qt${QT_VERSION_MAJOR}::WebEngineWidgets  
   Qt${QT_VERSION_MAJOR}::Sql
-  # crypto
-  # ssl
-  libssh2
-  ws2_32
+  ${target_link_libraries_flag}
 )
+
+
