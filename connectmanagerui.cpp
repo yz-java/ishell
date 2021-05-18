@@ -18,7 +18,7 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
     ui->setupUi(this);
 
     setWindowTitle("连接管理器");
-
+    setFixedSize(600, 300);
     QVBoxLayout* rootlayout=new QVBoxLayout();
 
     QHBoxLayout* hlayout=new QHBoxLayout();
@@ -176,7 +176,7 @@ void ConnectManagerUI::popMenu(const QPoint& p){
         if(info.id!=1){
             deleteWell=new QAction("删除",this);//删除
             //在界面上删除该item
-            connect(deleteWell, &QAction::triggered, [&](){
+            connect(deleteWell, &QAction::triggered,this,[&](){
 
                 if(info.parentId!=0){
                     ConnectDao::GetInstance()->deleteById(info.id);

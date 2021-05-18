@@ -14,7 +14,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle("ishell");
-//    setWindowFlags(Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint);
 
     QList<QScreen *> list_screen =  QGuiApplication::screens();  //多显示器
     QRect rect = list_screen.at(0)->geometry();
@@ -29,11 +28,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     DBUtil::GetInstance()->init();
 
+    QTimer::singleShot(0,this,[=](){
+        initUI();
+    });
+
+}
+
+void MainWindow::initUI(){
     connectManagerUI=new ConnectManagerUI(this);
 
     ui->tabWidget->setTabPosition(QTabWidget::North);
     ui->tabWidget->insertTab(0,new QWidget(this), QIcon(":/icons/manager.png"),"连接管理");
-
+    ui->tabWidget->setTabToolTip(0,"连接管理");
     webView = new QWebEngineView(this);
     QFile file(":/html/README.html");
     if (!file.open(QIODevice::ReadOnly))
@@ -44,14 +50,14 @@ MainWindow::MainWindow(QWidget *parent)
     webView->setHtml(htmlData);
     webView->show();
 
+    ui->tabWidget->setUsesScrollButtons(true);
     ui->tabWidget->insertTab(1,webView,QIcon(":/icons/welcome.png"),"欢迎页");
-
+    ui->tabWidget->setTabToolTip(1,"欢迎页");
     this->ui->tabWidget->setTabsClosable(true);
     ui->tabWidget->setCurrentIndex(1);
     mainwindow=this;
     STATUS_BAR_HIGHT=ui->statusbar->height();
     connect(connectManagerUI,SIGNAL(openSSHConnect(ConnectInfo)),this,SLOT(openSSHConnect(ConnectInfo)));
-
 }
 
 void MainWindow::resizeEvent(QResizeEvent *)
@@ -70,11 +76,14 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
     qDebug() << index;
     if(index==0){
-        this->ui->tabWidget->setCurrentIndex(1);
-        connectManagerUI->show();
-        ui->tabWidget->setCurrentIndex(currentIndex);
+        this->ui->tabWidget->setCurrentIndex(currentIndex);
+        if(!connectManagerUI->isActiveWindow()){
+            connectManagerUI->show();
+        }
         return;
     }
+    currentIndex=index;
+
 }
 
 void MainWindow::on_tabWidget_tabCloseRequested(int index)
@@ -97,5 +106,6 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index)
 void MainWindow::openSSHConnect(ConnectInfo connectInfo){
     int count=ui->tabWidget->count();
     ui->tabWidget->insertTab(count,new WebConsole(this,&connectInfo),QIcon(":/icons/console.png"),connectInfo.name);
+    ui->tabWidget->setTabToolTip(count,connectInfo.name);
     ui->tabWidget->setCurrentIndex(count);
 }

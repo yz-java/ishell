@@ -9,6 +9,11 @@ ConfirmDialog::ConfirmDialog(QWidget *parent,QString title):QDialog(parent)
         setWindowTitle(title);
     }
 
+#ifdef Q_OS_MAC
+    setWindowFlags(windowFlags()&~Qt::WindowMaximizeButtonHint);    // 禁止最大化按钮
+    setFixedSize(200,100);
+#endif
+
     QVBoxLayout* rootlayout=new QVBoxLayout();
     QLineEdit* inputEdit=new QLineEdit();
     rootlayout->addWidget(inputEdit);

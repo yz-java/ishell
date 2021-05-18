@@ -38,6 +38,7 @@ private:
     ConnectManagerUI *connectManagerUI;
     int currentIndex;
     QWebEngineView* webView;
+    void initUI();
 };
 #endif // MAINWINDOW_H
 

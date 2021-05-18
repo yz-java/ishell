@@ -10,6 +10,8 @@ ConnectEditUI::ConnectEditUI(QWidget *parent,QString title) :
 {
     ui->setupUi(this);
     setWindowTitle(title);
+    setWindowFlags(windowFlags()&~Qt::WindowMaximizeButtonHint);    // 禁止最大化按钮
+    setFixedSize(this->width(),this->height());
     ui->save->setIcon(QIcon(":/icons/save.png"));
     ui->cancel->setIcon(QIcon(":/icons/cancel.png"));
     refreshPage();
