@@ -83,6 +83,8 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index)
     if(index==0){
         return;
     }
+    WebConsole* console = (WebConsole*)ui->tabWidget->widget(index);
+    console->close();
     ui->tabWidget->removeTab(index);
 
     if(ui->tabWidget->count()==1){

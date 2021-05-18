@@ -1,4 +1,5 @@
 ﻿#include "sshclient.h"
+#include <QTimer>
 
 SSHClient::SSHClient(QObject *parent)
 {
@@ -89,36 +90,49 @@ bool SSHClient::open_channel(){
 
     if ( channel == NULL ) {
         fprintf(stderr, "Failed to open a new channel\n");
-        close(sock);
-        close_connect();
+        stop();
         return false;
     }
+
     if (libssh2_channel_request_pty( channel, "xterm") != 0) {
        fprintf(stderr, "Failed to request a pty\n");
-       close(sock);
-       close_connect();
+       stop();
+       return false;
+    }
+    if(pty_rows!=0&&pty_cols!=0){
+        libssh2_channel_request_pty_size(channel, pty_cols, pty_rows);
     }
 
     /* Request a shell */
     if (libssh2_channel_shell(channel) != 0) {
        fprintf(stderr, "Failed to open a shell\n");
-       close(sock);
-       close_connect();
+       stop();
+       return false;
     }
+
+    emit openChannelSuccess();
     return true;
 }
 
 void SSHClient::setChannelRequestPtySize(int row,int column){
     libssh2_channel_request_pty_size(channel, column, row);
 }
-void SSHClient::close_channel(){
+void SSHClient::free_channel(){
+    libssh2_channel_free(channel);
+    channel=NULL;
+}
 
+void SSHClient::close_session(){
+    libssh2_session_disconnect(session, "Session Shutdown, Thank you for playing");
+    libssh2_session_free(session);
 }
 
 void SSHClient::close_connect(){
-    libssh2_session_disconnect(session, "Session Shutdown, Thank you for playing");
-    libssh2_session_free(session);
-    libssh2_exit();
+#ifdef WIN32
+    closesocket(sock);
+#else
+    close(sock);
+#endif
 }
 
 void SSHClient::exec(std::string shell){
@@ -144,21 +158,34 @@ void SSHClient::run(){
         return;
     }
 
-    while (1) {
+    int nfds = 1;
+    char buf;
+    while (running) {
         if ((fds = static_cast<LIBSSH2_POLLFD *>(malloc(sizeof(LIBSSH2_POLLFD)))) == NULL)
             break;
         fds[0].type = LIBSSH2_POLLFD_CHANNEL;
         fds[0].fd.channel = channel;
         fds[0].events =  LIBSSH2_POLLFD_POLLIN | LIBSSH2_POLLFD_POLLOUT;
 
-        if (libssh2_poll(fds, nfds, 0) >0) {
+        if (libssh2_poll(fds, nfds, 10) >0) {
             libssh2_channel_read(channel, &buf, 1);
             emit readChannelData(buf);
-            fprintf(stdout, "%c", buf);
-            fflush(stdout);
+//            fprintf(stdout, "%c", buf);
+//            fflush(stdout);
         }
         free (fds);
         if (libssh2_channel_eof(channel) == 1)
             break;
     }
+}
+
+void SSHClient::stop(){
+    running=false;
+    QTimer::singleShot(100,this,[&](){
+        close_session();
+        close_connect();
+        libssh2_exit();
+    });
+
+
 }

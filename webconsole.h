@@ -27,17 +27,26 @@ public:
     QWebEngineView* webView;
     QWebChannel *webChannel;
 
-
+protected:
+    void closeEvent(QCloseEvent *event);
 
 private:
     Ui::WebConsole *ui;
     void resizeEvent(QResizeEvent *);
-
+    QByteArray ba;
+    bool openChannelSeccess=false;
+    int rows;
+    int cols;
 
 public slots:
     void connectSuccess();
     void pageLoadFinished(bool flag);
+
+    //QWebChannel function
+    void ssh2connect(const QString& jsMsg);
     void recieveJsMessage(const QString& jsMsg);
+    void setChannelRequestPtySize(const QString& size);
+
 };
 
 #endif // WEBCONSOLE_H

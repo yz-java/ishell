@@ -13,6 +13,10 @@
 #include <stdlib.h>
 #include <libssh2.h>
 #include <QDebug>
+#include <iostream>
+using namespace std;
+
+#define BUFSIZE 32000
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
@@ -34,6 +38,10 @@ public:
 
     SSHClient(QString hostName,QString port,QString username,QString publicKeyPath,QString privateKeyPath,QString passPhrase);
 
+    int pty_rows=0;
+
+    int pty_cols=0;
+
     bool connect();
 
     bool openSession();
@@ -46,16 +54,21 @@ public:
 
     void exec(std::string shell);
 
-    void close_channel();
+    void free_channel();
+
+    void close_session();
 
     void close_connect();
 
-
+    void stop();
 
 private:
     int sock = 0;
+
     unsigned long hostaddr = 0;
+
     int port = 22;
+
     QString username;
 
     QString password;
@@ -69,28 +82,29 @@ private:
     int authType=1;
 
     struct sockaddr_in sin;
-    LIBSSH2_SESSION *session;
-    LIBSSH2_CHANNEL *channel;
-    int nfds = 1;
-    LIBSSH2_POLLFD *fds = NULL;
 
-    /* Struct winsize for term size */
-//    struct winsize w_size;
-//    struct winsize w_size_bck;
+    LIBSSH2_SESSION *session;
+
+    LIBSSH2_CHANNEL *channel;
+
+    LIBSSH2_POLLFD *fds = NULL;
 
     /* For select on stdin */
     fd_set set;
+
     struct timeval timeval_out;
 
-    char buf;
+    bool running=true;
+
     void run();
 
 
 signals:
-//    void readChannelData(const char* data);
+//    void readChannelData(char* data);
     void readChannelData(char data);
     void connectSuccess();
     void authSuccess();
+    void openChannelSuccess();
 };
 
 #endif // SSHCLIENT_H
