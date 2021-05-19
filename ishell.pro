@@ -52,6 +52,8 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+QTQUICK_COMPILER_SKIPPED_RESOURCES += html.qrc
+
 RESOURCES += \
     html.qrc \
     icon.qrc
