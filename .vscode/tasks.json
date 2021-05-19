@@ -1,0 +1,28 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "options": {
+        "cwd": "${workspaceFolder}/build"
+    },
+    "tasks": [
+        {
+            "label": "make",
+            "type": "shell",
+            "command": "make -j6",
+            "dependsOn":"cmake",
+            
+        },
+        {
+            "label": "cmake",
+            "type": "shell",
+            "command": "cmake -DCMAKE_BUILD_TYPE=Release ..",
+            "dependsOn":"clear",
+        },
+        {
+            "label": "clear",
+            "type": "shell",
+            "command": "rm -rf *"
+        }
+    ]
+}

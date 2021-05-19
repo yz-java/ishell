@@ -52,11 +52,13 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+QTQUICK_COMPILER_SKIPPED_RESOURCES += html.qrc
+
 RESOURCES += \
     html.qrc \
     icon.qrc
 
-unix:!macx: LIBS += -L$$PWD/Libs/ssh2/lib64/  -lcrypto -lssl -lssh2
+unix:!macx: LIBS += -L$$PWD/Libs/ssh2/lib/  -lcrypto -lssl -lssh2
 
 INCLUDEPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include
 DEPENDPATH += $$PWD/Libs/openssl/include $$PWD/Libs/ssh2/include

@@ -47,6 +47,8 @@ ELSEIF (APPLE)
     
 ELSEIF (UNIX)
 	MESSAGE(STATUS "Now is UNIX-like OS's.")
+  set(QT_DIR "/home/developer/Qt5.12.10/5.12.10/gcc_64/lib/cmake/Qt5")
+  set(Qt5_DIR "/home/developer/Qt5.12.10/5.12.10/gcc_64/lib/cmake/Qt5")
 ENDIF ()
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Sql WebChannel WebEngineWidgets REQUIRED)

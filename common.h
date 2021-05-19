@@ -14,6 +14,7 @@ class Common
 {
 public:
     Common();
+    static QString workspacePath;
 };
 
 #endif // COMMON_H

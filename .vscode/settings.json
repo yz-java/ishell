@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "qmainwindow": "cpp",
+        "qwebengineview": "cpp",
+        "qpushbutton": "cpp",
+        "qfile": "cpp",
+        "qscreen": "cpp"
+    }
+}

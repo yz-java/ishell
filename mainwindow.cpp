@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include "webconsole.h"
 #include "db/dbutil.h"
+#include <QDir>
 
 MainWindow* mainwindow=NULL;
 
@@ -18,6 +19,9 @@ MainWindow::MainWindow(QWidget *parent)
     QList<QScreen *> list_screen =  QGuiApplication::screens();  //多显示器
     QRect rect = list_screen.at(0)->geometry();
     setMinimumSize(800, 600);
+
+    QDir dir;
+    dir.mkdir(Common::workspacePath);
 
 //    int desktop_width = rect.width();
 //    int desktop_height = rect.height();
