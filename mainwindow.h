@@ -6,6 +6,7 @@
 #include "connectmanagerui.h"
 #include "welcome.h"
 #include <QWebEngineView>
+#include "websocketserver.h"
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
@@ -38,6 +39,7 @@ private:
     ConnectManagerUI *connectManagerUI;
     int currentIndex;
     QWebEngineView* webView;
+    WebSocketServer* webSocketServer;
     void initUI();
 };
 #endif // MAINWINDOW_H

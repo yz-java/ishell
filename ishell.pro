@@ -22,6 +22,7 @@ SOURCES += \
     mylabel.cpp \
     sshclient.cpp \
     webconsole.cpp \
+    websocketserver.cpp \
     welcome.cpp
 
 HEADERS += \
@@ -37,6 +38,7 @@ HEADERS += \
     mylabel.h \
     sshclient.h \
     webconsole.h \
+    websocketserver.h \
     welcome.h
 
 FORMS += \

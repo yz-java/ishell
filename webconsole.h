@@ -37,6 +37,7 @@ private:
     bool openChannelSeccess=false;
     int rows;
     int cols;
+    QString clientId;
 
 public slots:
     void connectSuccess();

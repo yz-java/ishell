@@ -21,10 +21,12 @@
   <div id="terminal" style="padding: 0;margin: 0;"></div>
 </body>
 <script type="text/javascript">
-  new QWebChannel(qt.webChannelTransport, function (channel) {
-    window.core = channel.objects.core
-  });
+  
+  new QWebChannel(qt.webChannelTransport, function(channel) {
+      window.core = channel.objects.core
+  })
 
+  var clientId
   var body_height = $(document).height() - 20;
   var body_width = $(document).width();
   $("#terminal").height(body_height);
@@ -99,9 +101,35 @@
       core.setChannelRequestPtySize(ss)
     }
   }
-  setTimeout(() => {
+
+  function setClientId(cId){
+    clientId=cId
+    open_websocket()
     core.ssh2connect("")
-  }, 100)
+  }
+
+  function open_websocket() {
+      if (location.search != "")
+          var baseUrl = (/[?&]webChannelBaseUrl=([A-Za-z0-9\-:/\.]+)/.exec(location.search)[1]);
+      else
+          var baseUrl = "ws://localhost:12345";
+
+      var socket = new WebSocket(baseUrl);
+
+      socket.onclose = function() {
+          console.error("web channel closed");
+      };
+      socket.onerror = function(error) {
+          console.error("web channel error: " + error);
+      };
+      socket.onopen = function() {
+          socket.send(clientId);
+      }
+      socket.onmessage=function(evt){
+        var received_msg = evt.data
+        term.write(received_msg)
+      }
+  }
 </script>
 
 </html>

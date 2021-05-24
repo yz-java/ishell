@@ -7,6 +7,7 @@
 #include "db/dbutil.h"
 #include <QDir>
 
+
 MainWindow* mainwindow=NULL;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -22,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     QDir dir;
     dir.mkdir(Common::workspacePath);
+//    WebSocketServer webSocketServer;
+    webSocketServer=new WebSocketServer(this);
+    webSocketServer->run();
 
 //    int desktop_width = rect.width();
 //    int desktop_height = rect.height();

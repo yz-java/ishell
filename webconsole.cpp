@@ -5,6 +5,7 @@
 #include <QDir>
 #include "common.h"
 #include <QTextCodec>
+#include "websocketserver.h"
 
 
 WebConsole::WebConsole(QWidget *parent,ConnectInfo* connectInfo) :
@@ -41,7 +42,8 @@ void WebConsole::resizeEvent(QResizeEvent *)
 }
 
 void WebConsole::pageLoadFinished(bool flag){
-
+    clientId=QString::number(QDateTime::currentDateTime().toMSecsSinceEpoch());
+    webView->page()->runJavaScript("setClientId("+clientId+")");
 }
 
 void WebConsole::connectSuccess(){
@@ -77,26 +79,18 @@ void WebConsole::ssh2connect(const QString& jsMsg){
 
 
     connect(sshClient,&SSHClient::readChannelData,this,[&](char data){
-        QString script;
         //处理中文
         if(data & 0x80){
             ba.append(data);
             if(ba.length()==3){
                 QString str(ba);
                 ba.clear();
-                script="term.write('"+str+"')";
-                webView->page()->runJavaScript(script);
+                WebSocketServer::instance->sendMsg(clientId,str);
             }
             return;
         }
-        if(data==13){
-           script="lineFeed()";
-        }else{
-            QString d(data);
-            script="term.write('"+d+"')";
-        }
-
-        webView->page()->runJavaScript(script);
+        QString d(data);
+        WebSocketServer::instance->sendMsg(clientId,d);
     });
 }
 
@@ -118,7 +112,9 @@ void WebConsole::setChannelRequestPtySize(const QString& size){
 void WebConsole::closeEvent(QCloseEvent *event){
     qDebug() << "close window";
     sshClient->stop();
+
     QTimer::singleShot(1000,this,[&](){
+        WebSocketServer::deleteClient(clientId);
         delete this;
     });
 }
