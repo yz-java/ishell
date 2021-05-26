@@ -23,9 +23,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     QDir dir;
     dir.mkdir(Common::workspacePath);
-//    WebSocketServer webSocketServer;
-    webSocketServer=new WebSocketServer(this);
-    webSocketServer->run();
 
 //    int desktop_width = rect.width();
 //    int desktop_height = rect.height();
@@ -36,8 +33,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     DBUtil::GetInstance()->init();
 
-    QTimer::singleShot(0,this,[=](){
+    QTimer::singleShot(100,this,[=](){
         initUI();
+        initWebSocketServer();
     });
 
 }
@@ -66,6 +64,16 @@ void MainWindow::initUI(){
     mainwindow=this;
     STATUS_BAR_HIGHT=ui->statusbar->height();
     connect(connectManagerUI,SIGNAL(openSSHConnect(ConnectInfo)),this,SLOT(openSSHConnect(ConnectInfo)));
+}
+
+void MainWindow::initWebSocketServer(){
+    webSocketServer=new WebSocketServer;
+    connect(webSocketServer,&WebSocketServer::errorMsg,this,[=](const QString& msg){
+        QMessageBox::warning(this,"警告",msg);
+        QApplication::quit();
+    });
+    webSocketServer->run();
+
 }
 
 void MainWindow::resizeEvent(QResizeEvent *)

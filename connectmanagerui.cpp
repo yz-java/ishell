@@ -9,6 +9,7 @@
 #include <QMenu>
 #include <QHeaderView>
 #include "db/connectdao.h"
+#include "sftpdialog.h"
 
 
 ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
@@ -139,7 +140,7 @@ void ConnectManagerUI::popMenu(const QPoint& p){
             menu.addAction(addconnect);
         }
         QAction* connectWell;
-
+        QAction* sftpWell;
         if(info.parentId!=0){
             connectWell=new QAction("连接",this);//连接
             connect(connectWell, &QAction::triggered,[&](){
@@ -147,6 +148,12 @@ void ConnectManagerUI::popMenu(const QPoint& p){
             });
             menu.addAction(connectWell);
 
+            sftpWell=new QAction("文件管理",this);
+            connect(sftpWell, &QAction::triggered,[&](){
+                SftpDialog* sftpDialog=new SftpDialog(this,&info);
+                sftpDialog->show();
+            });
+            menu.addAction(sftpWell);
 
         }
         QAction* editWell=new QAction("编辑",this);

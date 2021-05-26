@@ -3,7 +3,17 @@
 #include <QLineEdit>
 #include <QPushButton>
 
-ConfirmDialog::ConfirmDialog(QWidget *parent,QString title):QDialog(parent)
+ConfirmDialog::ConfirmDialog(QWidget *parent,QString title):ConfirmDialog(parent,title,"修改","取消")
+{
+
+}
+
+ConfirmDialog::ConfirmDialog(QWidget *parent,QString title,QString okButtonName):ConfirmDialog(parent,title,okButtonName,"取消")
+{
+
+}
+
+ConfirmDialog::ConfirmDialog(QWidget *parent,QString title,QString okButtonName,QString cancelButtonName):QDialog(parent)
 {
     if(!title.isEmpty()){
         setWindowTitle(title);
@@ -18,12 +28,12 @@ ConfirmDialog::ConfirmDialog(QWidget *parent,QString title):QDialog(parent)
     QLineEdit* inputEdit=new QLineEdit();
     rootlayout->addWidget(inputEdit);
     QHBoxLayout* hlayout=new QHBoxLayout();
-    QPushButton* cancelButton=new QPushButton("取消");
+    QPushButton* cancelButton=new QPushButton(cancelButtonName);
     cancelButton->setAutoDefault(false);
     connect(cancelButton,&QPushButton::clicked,[=](){
         this->close();
     });
-    QPushButton* okButton=new QPushButton("修改");
+    QPushButton* okButton=new QPushButton(okButtonName);
     okButton->setAutoDefault(true);
     connect(okButton,&QPushButton::clicked,[=](){
         emit successEdit(inputEdit->text());

@@ -10,7 +10,13 @@ class ConfirmDialog:public QDialog
 {
     Q_OBJECT
 public:
+
     ConfirmDialog(QWidget *parent = nullptr,QString title="");
+
+    ConfirmDialog(QWidget *parent,QString title,QString okButtonName);
+
+    ConfirmDialog(QWidget *parent,QString title,QString okButtonName,QString cancelButtonName);
+
 
 signals:
     void successEdit(QString input);

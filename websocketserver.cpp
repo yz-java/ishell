@@ -2,7 +2,7 @@
 #include <QMessageBox>
 QMap<QString,QWebSocket*> WebSocketServer::clientMap;
 WebSocketServer* WebSocketServer::instance=NULL;
-WebSocketServer::WebSocketServer(QWidget *parent):QWidget(parent)
+WebSocketServer::WebSocketServer()
 {
     instance=this;
 }
@@ -10,8 +10,8 @@ WebSocketServer::WebSocketServer(QWidget *parent):QWidget(parent)
 void WebSocketServer::run(){
     webSocketServer=new QWebSocketServer("Server",QWebSocketServer::NonSecureMode);
     if (!webSocketServer->listen(QHostAddress::LocalHost, 12345)) {
-        qFatal("Failed to open web socket server.");
-        QMessageBox::warning(this,"警告","12345端口已被占用");
+        qDebug() << "12345端口已被占用";
+        emit errorMsg("12345端口已被占用");
         return;
     }
     connect(webSocketServer,&QWebSocketServer::newConnection,this,&WebSocketServer::newConnection);

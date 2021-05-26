@@ -1,14 +1,14 @@
 #ifndef WEBSOCKETSERVER_H
 #define WEBSOCKETSERVER_H
 
-#include <QWidget>
+#include <QObject>
 #include <QWebSocketServer>
 #include <QWebSocket>
-class WebSocketServer:public QWidget
+class WebSocketServer:public QObject
 {
     Q_OBJECT
 public:
-    WebSocketServer(QWidget *parent);
+    WebSocketServer();
 
     static WebSocketServer* instance;
 
@@ -24,11 +24,12 @@ private:
     QWebSocketServer* webSocketServer;
     static QMap<QString,QWebSocket*> clientMap;
 
-public Q_SLOTS:
+public slots:
     void newConnection();
 
 signals:
     void sendMessage(const QString& msg);
+    void errorMsg(const QString& msg);
 };
 
 #endif // WEBSOCKETSERVER_H

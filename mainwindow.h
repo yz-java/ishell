@@ -41,6 +41,7 @@ private:
     QWebEngineView* webView;
     WebSocketServer* webSocketServer;
     void initUI();
+    void initWebSocketServer();
 };
 #endif // MAINWINDOW_H
 

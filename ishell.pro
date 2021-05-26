@@ -1,4 +1,4 @@
-QT       += core gui websockets webchannel webenginewidgets sql
+QT       += core concurrent gui websockets webchannel webenginewidgets sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -17,9 +17,12 @@ SOURCES += \
     console.cpp \
     db/connectdao.cpp \
     db/dbutil.cpp \
+    fileinfo.cpp \
     main.cpp \
     mainwindow.cpp \
     mylabel.cpp \
+    sftpclient.cpp \
+    sftpdialog.cpp \
     sshclient.cpp \
     webconsole.cpp \
     websocketserver.cpp \
@@ -34,8 +37,11 @@ HEADERS += \
     console.h \
     db/connectdao.h \
     db/dbutil.h \
+    fileinfo.h \
     mainwindow.h \
     mylabel.h \
+    sftpclient.h \
+    sftpdialog.h \
     sshclient.h \
     webconsole.h \
     websocketserver.h \
@@ -46,6 +52,7 @@ FORMS += \
     connectmanagerui.ui \
     console.ui \
     mainwindow.ui \
+    sftpdialog.ui \
     webconsole.ui \
     welcome.ui
 
