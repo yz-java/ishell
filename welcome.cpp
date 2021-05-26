@@ -18,6 +18,5 @@ Welcome::~Welcome()
 
 void Welcome::on_send_clicked()
 {
-    std::string shell=ui->shell->text().toStdString();
-    client->exec(shell);
+
 }

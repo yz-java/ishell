@@ -36,6 +36,7 @@ bool SSHClient::connect(){
     sin.sin_addr.s_addr = hostaddr;
     if (::connect(sock, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)) != 0) {
         fprintf (stderr, "Failed to established connection!\n");
+        emit errorMsg("Failed to established connection!");
         return false;
     }
     emit connectSuccess();
@@ -49,6 +50,7 @@ bool SSHClient::openSession(){
     session = libssh2_session_init();
     if (libssh2_session_startup (session, sock) != 0) {
         fprintf(stderr, "Failed Start the SSH session\n");
+        emit errorMsg("Failed Start the SSH session");
         return false;
     }
     qDebug() << "打开会话成功";
@@ -62,7 +64,7 @@ bool SSHClient::userauth(){
         std::string p=password.toStdString();
         if (libssh2_userauth_password(session, un.data(), p.data()) != 0) {
                fprintf(stderr, "Failed to authenticate\n");
-               close(sock);
+               emit errorMsg("Failed to authenticate");
                close_connect();
                return false;
          }
@@ -74,7 +76,7 @@ bool SSHClient::userauth(){
         std::string pp=passPhrase.toStdString();
         if (libssh2_userauth_publickey_fromfile(session, un.data(),pkf.data(),pvkf.data(),pp.data()) != 0) {
                fprintf(stderr, "Failed to authenticate\n");
-               close(sock);
+               emit errorMsg("Failed to authenticate");
                close_connect();
                return false;
          }
@@ -90,12 +92,14 @@ bool SSHClient::open_channel(){
 
     if ( channel == NULL ) {
         fprintf(stderr, "Failed to open a new channel\n");
+        emit errorMsg("Failed to open a new channel");
         stop();
         return false;
     }
 
     if (libssh2_channel_request_pty( channel, "xterm") != 0) {
        fprintf(stderr, "Failed to request a pty\n");
+       emit errorMsg("Failed to request a pty");
        stop();
        return false;
     }
@@ -106,6 +110,7 @@ bool SSHClient::open_channel(){
     /* Request a shell */
     if (libssh2_channel_shell(channel) != 0) {
        fprintf(stderr, "Failed to open a shell\n");
+       emit errorMsg("Failed to open a shell");
        stop();
        return false;
     }
@@ -118,13 +123,18 @@ void SSHClient::setChannelRequestPtySize(int row,int column){
     libssh2_channel_request_pty_size(channel, column, row);
 }
 void SSHClient::free_channel(){
-    libssh2_channel_free(channel);
+    if(channel!=NULL){
+        libssh2_channel_free(channel);
+    }
     channel=NULL;
 }
 
 void SSHClient::close_session(){
-    libssh2_session_disconnect(session, "Session Shutdown, Thank you for playing");
-    libssh2_session_free(session);
+    if(session!=NULL){
+        libssh2_session_disconnect(session, "Session Shutdown, Thank you for playing");
+        libssh2_session_free(session);
+    }
+
 }
 
 void SSHClient::close_connect(){
@@ -136,8 +146,8 @@ void SSHClient::close_connect(){
 }
 
 void SSHClient::exec(std::string shell){
-    int size=shell.size();
-    libssh2_channel_write_ex(channel, 0, shell.c_str(), size);
+    int size=strlen(shell.c_str());
+    libssh2_channel_write(channel, shell.c_str(), size);
 //    libssh2_channel_write(channel,shell.c_str(),1);
 }
 

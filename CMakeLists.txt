@@ -24,7 +24,7 @@ LINK_DIRECTORIES(
 set(target_link_libraries_flag "crypto" "ssl" "ssh2")
 IF (WIN32)
   MESSAGE(STATUS "Now is windows")
-  set(executable_flag "WIN32")
+  set(executable_flag "WIN32" "app_win32.rc")
   set(target_link_libraries_flag "ws2_32" "libcrypto" "libssl" "libssh2")
   MESSAGE(STATUS "target_link_libraries_flag ==> ${target_link_libraries_flag}")
   
@@ -49,8 +49,8 @@ ELSEIF (UNIX)
 	MESSAGE(STATUS "Now is UNIX-like OS's.")
 ENDIF ()
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Sql WebChannel WebEngineWidgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Sql Widgets WebChannel WebEngineWidgets REQUIRED)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
 
 
 FILE(GLOB SRC_LIST_CPP *.cpp)
@@ -77,6 +77,8 @@ target_link_libraries(
   Qt${QT_VERSION_MAJOR}::WebChannel 
   Qt${QT_VERSION_MAJOR}::WebEngineWidgets  
   Qt${QT_VERSION_MAJOR}::Sql
+  Qt${QT_VERSION_MAJOR}::Concurrent
+  Qt${QT_VERSION_MAJOR}::WebSockets
   ${target_link_libraries_flag}
 )
 

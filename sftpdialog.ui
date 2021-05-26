@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Welcome</class>
- <widget class="QWidget" name="Welcome">
+ <class>SftpDialog</class>
+ <widget class="QDialog" name="SftpDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>832</width>
-    <height>448</height>
+    <width>926</width>
+    <height>636</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Dialog</string>
   </property>
  </widget>
  <resources/>

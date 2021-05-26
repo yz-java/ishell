@@ -1,5 +1,6 @@
 ﻿#include "dbutil.h"
 #include <QDebug>
+#include "common.h"
 
 DBUtil* DBUtil::m_pInstance=NULL;
 DBUtil::DBUtil()
@@ -23,7 +24,8 @@ void DBUtil::init(){
     else
     {
         database = QSqlDatabase::addDatabase("QSQLITE");
-        database.setDatabaseName("ishell.db");
+        QString dbName=Common::workspacePath+"ishell.db";
+        database.setDatabaseName(dbName);
     }
     if (!database.open())
     {
