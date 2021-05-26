@@ -10,5 +10,6 @@
         <file>icons/welcome.png</file>
         <file>icons/cancel.png</file>
         <file>icons/refresh.png</file>
+        <file>icons/file.png</file>
     </qresource>
 </RCC>

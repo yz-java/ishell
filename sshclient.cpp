@@ -65,7 +65,6 @@ bool SSHClient::userauth(){
         if (libssh2_userauth_password(session, un.data(), p.data()) != 0) {
                fprintf(stderr, "Failed to authenticate\n");
                emit errorMsg("Failed to authenticate");
-               close(sock);
                close_connect();
                return false;
          }
@@ -78,7 +77,6 @@ bool SSHClient::userauth(){
         if (libssh2_userauth_publickey_fromfile(session, un.data(),pkf.data(),pvkf.data(),pp.data()) != 0) {
                fprintf(stderr, "Failed to authenticate\n");
                emit errorMsg("Failed to authenticate");
-               close(sock);
                close_connect();
                return false;
          }
@@ -148,8 +146,8 @@ void SSHClient::close_connect(){
 }
 
 void SSHClient::exec(std::string shell){
-    int size=shell.size();
-    libssh2_channel_write_ex(channel, 0, shell.c_str(), size);
+    int size=strlen(shell.c_str());
+    libssh2_channel_write(channel, shell.c_str(), size);
 //    libssh2_channel_write(channel,shell.c_str(),1);
 }
 
