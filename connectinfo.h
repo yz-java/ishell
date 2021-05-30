@@ -1,6 +1,7 @@
 ﻿#ifndef CONNECTINFO_H
 #define CONNECTINFO_H
 #include <QString>
+#include <QJsonObject>
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
@@ -32,6 +33,10 @@ public:
     QString passPhrase="";
     //1=帐号密码  2=公私钥
     int authType=1;
+
+    static ConnectInfo jsonStrToConnectInfo(QString jsonStr);
+
+    static ConnectInfo jsonObjToConnectInfo(QJsonObject obj);
 };
 
 #endif // CONNECTINFO_H

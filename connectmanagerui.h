@@ -7,6 +7,7 @@
 #include <QTreeView>
 #include "connectinfo.h"
 #include "components/confirmdialog.h"
+#include "backupandrecoverydialog.h"
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
@@ -30,8 +31,10 @@ private:
     Ui::ConnectManagerUI *ui;
     QTreeWidgetItem* rootItem;
     QTreeWidget* treeView;
+    BackupAndRecoveryDialog* backupAndRecoveryDialog;
 
     QList<ConnectInfo> connectInfos;
+
     void updateConnectName(QTreeWidgetItem* item,int id,QString name);
 
     void refreshList(QTreeWidgetItem* item);

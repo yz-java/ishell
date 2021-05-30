@@ -5,6 +5,8 @@
 #include <QtConcurrent>
 #include <QMutex>
 
+#define BUFFER_SIZE 1048576
+
 QMutex mutexlock;
 
 SFTPClient::SFTPClient(ConnectInfo *connectInfo)
@@ -176,6 +178,9 @@ void SFTPClient::execShell(QString shell){
     }
     mutexlock.unlock();
     libssh2_channel_write(channel,s.c_str(),strlen(s.c_str()));
+    QTimer::singleShot(1000,[&](){
+        free_channel();
+    });
 
 }
 
@@ -215,12 +220,12 @@ void SFTPClient::fileUpload(QString filePath,QString remotePath){
         }
         int fileSize=f.size();
         int currentSize=0;
-        char* data=new char[1024];
+        char* data=new char[BUFFER_SIZE];
         int readSize=0;
-        while ((readSize=f.read(data,1024))>0)
+        while ((readSize=f.read(data,BUFFER_SIZE))>0)
         {
             rc=libssh2_sftp_write(sftp_handle,data,readSize);
-            if(rc<0){
+            if(rc<=0){
                 emit errorMsg("文件上传失败");
                 return;
             }
@@ -231,6 +236,52 @@ void SFTPClient::fileUpload(QString filePath,QString remotePath){
 
         f.close();
         libssh2_sftp_close(sftp_handle);
+        emit fileUploadSuccess();
+    });
+
+}
+
+void SFTPClient::scpUpload(QString filePath,QString remotePath){
+    struct stat fileinfo;
+    stat(filePath.toStdString().data(),&fileinfo);
+    channel = libssh2_scp_send(session, remotePath.toStdString().data(), fileinfo.st_mode & 0777,
+                                  (unsigned long)fileinfo.st_size);
+    if(!channel) {
+        return;
+    }
+
+    QtConcurrent::run([=](){
+        QFile f(filePath);
+        if (!f.open(QIODevice::ReadOnly))
+        {
+            emit errorMsg("文件打开失败");
+            return;
+        }
+        int fileSize=f.size();
+        int currentSize=0;
+        char data[BUFFER_SIZE];
+        char *ptr;
+        int readSize=0;
+        while ((readSize=f.read(data,BUFFER_SIZE))>0)
+        {
+            ptr = data;
+            do{
+                rc=libssh2_channel_write(channel,ptr,readSize);
+                if(rc<0){
+                    break;
+                }
+                currentSize+=rc;
+                ptr+=rc;
+                readSize-=rc;
+                float process=currentSize/(fileSize*1.0);
+                emit fileUploadProcess(fileSize,currentSize,process);
+            }while (readSize);
+        }
+        qDebug() << "已发送数据大小："<<currentSize;
+        f.close();
+        libssh2_channel_send_eof(channel);
+        libssh2_channel_wait_eof(channel);
+        free_channel();
         emit fileUploadSuccess();
     });
 
@@ -261,15 +312,15 @@ void SFTPClient::fileDownload(QString remotePath, QString localPath){
             emit errorMsg("本地文件打开失败");
             return;
         }
-        char* data=new char[1024];
+        char* data=new char[BUFFER_SIZE];
         libssh2_uint64_t currentSize=0;
         do{
-            rc=libssh2_sftp_read(sftp_handle,data,1024);
+            rc=libssh2_sftp_read(sftp_handle,data,BUFFER_SIZE);
             if(rc==0){
                 break;
             }
             if(rc<0){
-                emit errorMsg("文件上传失败");
+                emit errorMsg("文件下载失败");
                 return;
             }
             currentSize+=rc;
@@ -281,6 +332,52 @@ void SFTPClient::fileDownload(QString remotePath, QString localPath){
         libssh2_sftp_close(sftp_handle);
         emit fileDownloadSuccess();
     });
+}
+
+void SFTPClient::scpDownload(QString remotePath, QString localPath){
+    libssh2_struct_stat fileinfo;
+    channel = libssh2_scp_recv2(session, remotePath.toStdString().data(), &fileinfo);
+    if(!channel) {
+        fprintf(stderr, "Unable to open channel");
+        return;
+    }
+
+    libssh2_uint64_t fileSize = fileinfo.st_size;
+    qDebug() << "文件大小：" << fileSize;
+    QtConcurrent::run([=](){
+        QFile file(localPath);
+        bool isopen=file.open(QIODevice::WriteOnly);
+        if(!isopen){
+            emit errorMsg("本地文件打开失败");
+            return;
+        }
+        char* data=new char[BUFFER_SIZE];
+        libssh2_uint64_t currentSize=0;
+        while (currentSize<fileSize) {
+            rc=libssh2_channel_read(channel,data,BUFFER_SIZE);
+            if(rc==0){
+                break;
+            }
+            if(rc<0){
+                emit errorMsg("文件下载失败");
+                return;
+            }
+            currentSize+=rc;
+            file.write(data,rc);
+            float process=currentSize/(fileSize*1.0);
+            emit fileDownloadProcess(fileSize,currentSize,process);
+        }
+        file.close();
+        free_channel();
+        emit fileDownloadSuccess();
+    });
+}
+
+void SFTPClient::free_channel(){
+    if(channel!=NULL){
+        libssh2_channel_free(channel);
+        channel=NULL;
+    }
 }
 
 void SFTPClient::close_connect(){
