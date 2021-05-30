@@ -42,6 +42,7 @@ private:
     WebSocketServer* webSocketServer;
     void initUI();
     void initWebSocketServer();
+    QLabel* connectInfo;
 };
 #endif // MAINWINDOW_H
 

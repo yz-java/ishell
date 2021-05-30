@@ -61,13 +61,19 @@ public:
 
     void fileUpload(QString filePath,QString remotePath);
 
+    void scpUpload(QString filePath,QString remotePath);
+
     void fileDownload(QString remotePath,QString localPath);
+
+    void scpDownload(QString filePath,QString remotePath);
 
     void execShell(QString shell);
 
     void run();
 
     void stop();
+
+    void free_channel();
 
 private:
     ConnectInfo connectInfo;

@@ -21,6 +21,8 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
     setWindowTitle("连接管理器");
     setWindowFlags(windowFlags()&~Qt::WindowContextHelpButtonHint);
     setFixedSize(600, 300);
+
+    backupAndRecoveryDialog = new BackupAndRecoveryDialog(this);
     QVBoxLayout* rootlayout=new QVBoxLayout();
 
     QHBoxLayout* hlayout=new QHBoxLayout();
@@ -42,6 +44,23 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
     vAddFolderlayout->addWidget(folderlabel,0,Qt::AlignCenter);
     vAddFolderlayout->addWidget(grouplabel,0,Qt::AlignCenter);
 
+    QVBoxLayout* vBackUplayout=new QVBoxLayout();
+    MyLabel *backupImagelabel =new MyLabel();
+    connect(backupImagelabel,&MyLabel::click,[=](){
+        backupAndRecoveryDialog->show();
+    });
+    QPixmap backuppixmap(":/icons/backup_recovery.png");
+    backuppixmap = backuppixmap.scaled(sz, Qt::KeepAspectRatio);
+    backupImagelabel->setPixmap(backuppixmap);
+    backupImagelabel->show();
+    MyLabel *backuplabel =new MyLabel("备份/恢复");
+    connect(backuplabel,&MyLabel::click,[=](){
+        backupAndRecoveryDialog->show();
+    });
+    vBackUplayout->addWidget(backupImagelabel,0,Qt::AlignCenter);
+    vBackUplayout->addWidget(backuplabel,0,Qt::AlignCenter);
+
+
     QVBoxLayout* vAddServerlayout=new QVBoxLayout();
     MyLabel *refreshIconlabel =new MyLabel();
     connect(refreshIconlabel,&MyLabel::click,[=](){
@@ -59,7 +78,7 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
     vAddServerlayout->addWidget(refreshlabel,0,Qt::AlignCenter);
 
     hlayout->addLayout(vAddFolderlayout);
-//    hlayout->addStretch(1);
+    hlayout->addLayout(vBackUplayout);
     hlayout->addLayout(vAddServerlayout);
 
     rootlayout->addLayout(hlayout);

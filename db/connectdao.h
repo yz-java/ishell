@@ -38,6 +38,8 @@ public:
 
     bool deleteByParentId(int parentId);
 
+    bool deleteAll();
+
 private:
     static ConnectDao* instance;
 };

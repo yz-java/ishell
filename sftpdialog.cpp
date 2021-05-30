@@ -72,6 +72,8 @@ void SftpDialog::initUI(){
     QVBoxLayout* vDirlayout=new QVBoxLayout();
     treeView=new QTreeWidget(this);
     treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    treeView->sortByColumn(0,Qt::SortOrder::AscendingOrder);
+    treeView->setSortingEnabled(true);
 
     rootItem = new QTreeWidgetItem(treeView);
     rootItem->setText(0,"/");
@@ -215,6 +217,7 @@ void SftpDialog::treeWidgetItemRefresh(QTreeWidgetItem* item){
         item->removeChild(item->takeChild(0));
     }
     QString currentPath=item->text(6);
+    item->setExpanded(true);
     sftpClient->opendir(currentPath);
 }
 
@@ -222,7 +225,7 @@ void SftpDialog::fileUpload(QTreeWidgetItem* item){
     QString filePath = QFileDialog::getOpenFileName(this, tr("open file"), "",  tr("*"));
     QFileInfo info(filePath);
     QString fileName=info.fileName();
-    sftpClient->fileUpload(filePath,item->text(6)+"/"+fileName);
+    sftpClient->scpUpload(filePath,item->text(6)+"/"+fileName);
     progressBarMaster->setHidden(false);
     progressBarChild->setHidden(false);
     treeView->setEnabled(false);
@@ -258,7 +261,7 @@ void SftpDialog::fileDownload(QString remotePath){
             return;
         }
     }
-    sftpClient->fileDownload(remotePath,localPath);
+    sftpClient->scpDownload(remotePath,localPath);
     progressBarMaster->setHidden(false);
     progressBarChild->setHidden(false);
     treeView->setEnabled(false);

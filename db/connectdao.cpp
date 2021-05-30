@@ -27,9 +27,8 @@ QList<ConnectInfo> ConnectDao::getConnectInfos(){
     {
         while(sqlQuery.next())
         {
-            int id = sqlQuery.value(0).toInt();
-            QString name = sqlQuery.value(1).toString();
-            qDebug()<<QString("id:%1    name:%2").arg(id).arg(name);
+            ConnectInfo connectInfo=toConnectInfo(&sqlQuery);
+            infos.append(connectInfo);
         }
     }
     return infos;
@@ -247,6 +246,18 @@ ConnectInfo ConnectDao::toConnectInfo(QSqlQuery* sqlQuery){
     QString passPhrase = sqlQuery->value(10).toString();
     connectInfo.passPhrase=passPhrase;
     return connectInfo;
+}
+
+bool ConnectDao::deleteAll(){
+    QSqlQuery sql_query;
+    QString sql="delete from connect";
+    sql_query.prepare(sql);
+    if(sql_query.exec())
+    {
+        return true;
+    }
+    qDebug()<<sql_query.lastError();
+    return false;
 }
 
 

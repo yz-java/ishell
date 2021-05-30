@@ -11,5 +11,6 @@
         <file>icons/cancel.png</file>
         <file>icons/refresh.png</file>
         <file>icons/file.png</file>
+        <file>icons/backup_recovery.png</file>
     </qresource>
 </RCC>

@@ -6,6 +6,7 @@
 #include "webconsole.h"
 #include "db/dbutil.h"
 #include <QDir>
+#include <QLabel>
 
 
 MainWindow* mainwindow=NULL;
@@ -37,7 +38,12 @@ MainWindow::MainWindow(QWidget *parent)
         initUI();
         initWebSocketServer();
     });
+    connectInfo=new QLabel;
+    connectInfo->setText("项目开源地址：https://github.com/yz-java/ishell    Email:yangzhaojava@gmail.com");
+    connectInfo->setAlignment(Qt::AlignCenter);
+    connectInfo->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
+    ui->statusbar->addWidget(connectInfo);
 }
 
 void MainWindow::initUI(){
@@ -79,6 +85,7 @@ void MainWindow::initWebSocketServer(){
 void MainWindow::resizeEvent(QResizeEvent *)
 {
     this->ui->tabWidget->resize(this->size());
+    connectInfo->setMinimumWidth(this->width());
 }
 
 MainWindow::~MainWindow()
