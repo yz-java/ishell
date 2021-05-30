@@ -207,6 +207,9 @@
          <property name="text">
           <string/>
          </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -237,6 +240,9 @@
         <widget class="QLineEdit" name="privateKeyFilePath">
          <property name="text">
           <string/>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -284,7 +290,7 @@
      <x>20</x>
      <y>390</y>
      <width>371</width>
-     <height>30</height>
+     <height>33</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_8">

@@ -43,6 +43,7 @@ BackupAndRecoveryDialog::BackupAndRecoveryDialog(QWidget *parent) :
     ui->setupUi(this);
     setWindowTitle("备份-恢复");
     setWindowFlags(windowFlags()&~Qt::WindowMaximizeButtonHint);
+    setFixedSize(this->width(), this->height());
 }
 
 BackupAndRecoveryDialog::~BackupAndRecoveryDialog()
