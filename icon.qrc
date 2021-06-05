@@ -12,5 +12,6 @@
         <file>icons/refresh.png</file>
         <file>icons/file.png</file>
         <file>icons/backup_recovery.png</file>
+        <file>logo.png</file>
     </qresource>
 </RCC>

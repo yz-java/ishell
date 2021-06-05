@@ -1,6 +1,7 @@
 # ishell
 
-ishell 是一个跨平台的shell命令行工具，采用Qt5+libssh2+Xterm.js编码；可以运行在windows Linux Mac 平台。
+<h3>ishell 是一个跨平台的shell命令行工具，采用Qt5+libssh2+Xterm.js编码</h3>
+<h3>可以运行在windows Linux（Ubuntu、统信UOS、Deepin） Mac 平台。</h3>
 
 ## 编译
 
@@ -16,10 +17,6 @@ ishell 是一个跨平台的shell命令行工具，采用Qt5+libssh2+Xterm.js编
   ```
   GCC+libssh2+openssl+QT5.12.10+Cmake(Qtcreator)
   ```
-
-## Future
-
-  - SFTP GUI
 
 ## GUI
 

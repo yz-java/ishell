@@ -97,7 +97,7 @@ bool SSHClient::open_channel(){
         return false;
     }
 
-    if (libssh2_channel_request_pty( channel, "xterm") != 0) {
+    if (libssh2_channel_request_pty( channel, "vt100") != 0) {
        fprintf(stderr, "Failed to request a pty\n");
        emit errorMsg("Failed to request a pty");
        stop();

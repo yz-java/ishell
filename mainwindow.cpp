@@ -7,7 +7,7 @@
 #include "db/dbutil.h"
 #include <QDir>
 #include <QLabel>
-
+#include "QTermWidget/QTermWidget.h"
 
 MainWindow* mainwindow=NULL;
 
@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle("ishell");
-
+    setWindowIcon(QIcon(":/logo.png"));
     QList<QScreen *> list_screen =  QGuiApplication::screens();  //多显示器
     QRect rect = list_screen.at(0)->geometry();
     setMinimumSize(800, 600);
@@ -128,7 +128,7 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index)
 
 void MainWindow::openSSHConnect(ConnectInfo connectInfo){
     int count=ui->tabWidget->count();
-    ui->tabWidget->insertTab(count,new WebConsole(this,&connectInfo),QIcon(":/icons/console.png"),connectInfo.name);
+    ui->tabWidget->insertTab(count,new QTermWidget(this,&connectInfo),QIcon(":/icons/console.png"),connectInfo.name);
     ui->tabWidget->setTabToolTip(count,connectInfo.name);
     ui->tabWidget->setCurrentIndex(count);
 }
