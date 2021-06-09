@@ -105,9 +105,10 @@ void SFTPClient::opendir(QString sftpPath){
             if(rc > 0) {
                 /* rc is the length of the file name in the mem
                    buffer */
-
+                QString l(longentry);
+                l+=" "+QString::number(attrs.mtime);
                 if(longentry[0] != '\0') {
-                    emit opendirCallBack(longentry);
+                    emit opendirCallBack(l);
 //                    printf("%s\n", longentry);
                 }
             }
