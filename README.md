@@ -18,11 +18,7 @@
   GCC+libssh2+openssl+QT5.12.10+Cmake(Qtcreator)
   ```
 
-<<<<<<< HEAD
 ## GUI
-=======
-  ## GUI
->>>>>>> ddb7e2d58951b2af22dc103b0439ac9516f6ad80
 
   ![mac GUI](https://raw.githubusercontent.com/yz-java/ishell/dev/gui-mac.png)
 
