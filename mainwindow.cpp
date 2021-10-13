@@ -7,7 +7,6 @@
 #include "db/dbutil.h"
 #include <QDir>
 #include <QLabel>
-#include "QTermWidget/QTermWidget.h"
 
 MainWindow* mainwindow=NULL;
 
@@ -128,7 +127,7 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index)
 
 void MainWindow::openSSHConnect(ConnectInfo connectInfo){
     int count=ui->tabWidget->count();
-    ui->tabWidget->insertTab(count,new QTermWidget(this,&connectInfo),QIcon(":/icons/console.png"),connectInfo.name);
+    ui->tabWidget->insertTab(count,new WebConsole(this,&connectInfo),QIcon(":/icons/console.png"),connectInfo.name);
     ui->tabWidget->setTabToolTip(count,connectInfo.name);
     ui->tabWidget->setCurrentIndex(count);
 }

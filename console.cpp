@@ -9,6 +9,7 @@ Console::Console(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
     sshClient=new SSHClient("127.0.0.1","22","developer","yangzhao!3329");
     sshClient->start();
     connect(sshClient,SIGNAL(connectSuccess()),this,SLOT(connectSuccess()));

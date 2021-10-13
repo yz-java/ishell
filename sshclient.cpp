@@ -169,7 +169,7 @@ void SSHClient::run(){
     }
 
     int nfds = 1;
-    char buf;
+    char* buf = new char[READ_BUF_SIZE];
     while (running) {
         if ((fds = static_cast<LIBSSH2_POLLFD *>(malloc(sizeof(LIBSSH2_POLLFD)))) == NULL)
             break;
@@ -178,8 +178,16 @@ void SSHClient::run(){
         fds[0].events =  LIBSSH2_POLLFD_POLLIN | LIBSSH2_POLLFD_POLLOUT;
 
         if (libssh2_poll(fds, nfds, 10) >0) {
-            libssh2_channel_read(channel, &buf, 1);
-            emit readChannelData(buf);
+            ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
+//            qDebug() << "实际读取长度：" << length;
+            if(length<=0){
+                continue;
+            }
+            char* d = new char[length];
+            memcpy(d,buf,length);
+            QString data = QString::fromUtf8(d,length);
+            emit readChannelData(data);
+            free(d);
 //            fprintf(stdout, "%c", buf);
 //            fflush(stdout);
         }

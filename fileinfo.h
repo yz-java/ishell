@@ -20,6 +20,8 @@ struct FileInfo_S {
 
     QString fileNum;
 
+    QString updateTime;
+
 };
 Q_DECLARE_METATYPE(FileInfo_S)
 

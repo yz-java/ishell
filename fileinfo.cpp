@@ -1,5 +1,5 @@
 #include "fileinfo.h"
-
+#include <QDateTime>
 
 FileInfo_S parseBySftpData(QString data){
     FileInfo_S info;
@@ -22,6 +22,9 @@ FileInfo_S parseBySftpData(QString data){
     info.userOrGroup=array[2]+"/"+array[3];
     info.fileSize=array[4];
     info.fileName=array[8];
-
+    unsigned long timeS=array[9].toULong();
+    QDateTime time = QDateTime::fromSecsSinceEpoch(timeS);
+    QString updateTime = time.toString("yyyy-MM-dd hh:mm:ss");
+    info.updateTime=updateTime;
     return info;
 }

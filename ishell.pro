@@ -9,8 +9,6 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    QTermWidget/QTermScreen.cpp \
-    QTermWidget/QTermWidget.cpp \
     backupandrecoverydialog.cpp \
     common.cpp \
     components/confirmdialog.cpp \
@@ -33,8 +31,6 @@ SOURCES += \
     welcome.cpp
 
 HEADERS += \
-    QTermWidget/QTermScreen.h \
-    QTermWidget/QTermWidget.h \
     backupandrecoverydialog.h \
     common.h \
     components/confirmdialog.h \
