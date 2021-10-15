@@ -94,8 +94,6 @@ private:
 
     struct timeval timeval_out;
 
-    bool running=true;
-
     void run();
 
 

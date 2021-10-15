@@ -10,12 +10,8 @@
         <file>html/xterm.html</file>
         <file>html/xterm.min.css</file>
         <file>html/xterm.min.js</file>
-        <file>html/xterm4/css/app.66a8813f.css</file>
-        <file>html/xterm4/css/chunk-vendors.a35e0796.css</file>
-        <file>html/xterm4/js/app.a76990fe.js</file>
-        <file>html/xterm4/js/app.a76990fe.js.map</file>
-        <file>html/xterm4/js/chunk-vendors.4c5b8e1b.js</file>
-        <file>html/xterm4/js/chunk-vendors.4c5b8e1b.js.map</file>
+        <file>html/xterm4/js/app.js</file>
+        <file>html/xterm4/js/chunk-vendors.js</file>
         <file>html/xterm4/index.html</file>
     </qresource>
 </RCC>

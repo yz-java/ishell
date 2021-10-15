@@ -1,6 +1,6 @@
 const webpack = require("webpack");
 module.exports = {
-    publicPath: './',
+    publicPath: process.env.publicPath,
     lintOnSave: false,
     configureWebpack: {
         //支持jquery

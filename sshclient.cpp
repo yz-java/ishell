@@ -168,14 +168,20 @@ void SSHClient::run(){
         return;
     }
 
+    if ((fds = static_cast<LIBSSH2_POLLFD *>(malloc(sizeof(LIBSSH2_POLLFD)))) == NULL){
+        return;
+    }
+    fds[0].type = LIBSSH2_POLLFD_CHANNEL;
+    fds[0].fd.channel = channel;
+    fds[0].events =  LIBSSH2_POLLFD_POLLIN | LIBSSH2_POLLFD_POLLOUT;
+
     int nfds = 1;
     char* buf = new char[READ_BUF_SIZE];
-    while (running) {
-        if ((fds = static_cast<LIBSSH2_POLLFD *>(malloc(sizeof(LIBSSH2_POLLFD)))) == NULL)
+    while (true) {
+        if (libssh2_channel_eof(channel) == 1){
+            free (fds);
             break;
-        fds[0].type = LIBSSH2_POLLFD_CHANNEL;
-        fds[0].fd.channel = channel;
-        fds[0].events =  LIBSSH2_POLLFD_POLLIN | LIBSSH2_POLLFD_POLLOUT;
+        }
 
         if (libssh2_poll(fds, nfds, 10) >0) {
             ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
@@ -191,19 +197,18 @@ void SSHClient::run(){
 //            fprintf(stdout, "%c", buf);
 //            fflush(stdout);
         }
-        free (fds);
-        if (libssh2_channel_eof(channel) == 1)
-            break;
     }
 }
 
 void SSHClient::stop(){
-    running=false;
     QTimer::singleShot(100,this,[&](){
+        free_channel();
         close_session();
-        close_connect();
-        libssh2_exit();
+        this->terminate();
+
     });
+    close_connect();
+    libssh2_exit();
 
 
 }

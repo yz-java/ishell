@@ -128,7 +128,9 @@ export default {
     setClientId: function (cId) {
       this.clientId = cId;
       this.open_websocket();
-      window.core.ssh2connect("");
+      setTimeout(()=>{
+        window.core.ssh2connect("");
+      },2000)
     },
 
     open_websocket: function () {
