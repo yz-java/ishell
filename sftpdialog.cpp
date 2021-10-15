@@ -65,6 +65,8 @@ SftpDialog::SftpDialog(QWidget *parent,ConnectInfo* connectInfo) :
         item->setText(6,currentPath+"/"+info.fileName);
         info.filePath=currentPath+"/"+info.fileName;
         item->setData(0,Qt::UserRole+1,QVariant::fromValue(info));
+
+        item->setText(7,info.updateTime);
     });
 }
 
@@ -110,10 +112,10 @@ void SftpDialog::initUI(){
     connect(treeView,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(popMenu(const QPoint&)));
 
     treeView->setColumnWidth(0,300);
-//    treeView->setColumnWidth(1,150);
-    treeView->setColumnCount(7);//设置列
+//    treeView->setColumnWidth(7,300);
+    treeView->setColumnCount(8);//设置列
     treeView->hideColumn(6);
-    treeView->setHeaderLabels(QStringList()<<"文件名"<<"大小"<< "目录/链接个数" <<"类型"<<"权限"<<"用户/用户组"<< "父路径");
+    treeView->setHeaderLabels(QStringList()<<"文件名"<<"大小"<< "目录/链接个数" <<"类型"<<"权限"<<"用户/用户组"<< "父路径" <<"修改时间");
     vDirlayout->addWidget(treeView);
 
 //    进度条

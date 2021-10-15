@@ -1,14 +1,17 @@
 <RCC>
     <qresource prefix="/html"/>
     <qresource prefix="/">
-        <file>html/qwebchannel.js</file>
-        <file>html/README.html</file>
         <file>html/fit.min.js</file>
         <file>html/fullscreen.min.css</file>
         <file>html/fullscreen.min.js</file>
         <file>html/jquery.min.js</file>
+        <file>html/qwebchannel.js</file>
+        <file>html/README.html</file>
+        <file>html/xterm.html</file>
         <file>html/xterm.min.css</file>
         <file>html/xterm.min.js</file>
-        <file>html/xterm.html</file>
+        <file>html/xterm4/js/app.js</file>
+        <file>html/xterm4/js/chunk-vendors.js</file>
+        <file>html/xterm4/index.html</file>
     </qresource>
 </RCC>

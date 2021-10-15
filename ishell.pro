@@ -15,7 +15,6 @@ SOURCES += \
     connecteditui.cpp \
     connectinfo.cpp \
     connectmanagerui.cpp \
-    console.cpp \
     db/connectdao.cpp \
     db/dbutil.cpp \
     fileinfo.cpp \
@@ -37,7 +36,6 @@ HEADERS += \
     connecteditui.h \
     connectinfo.h \
     connectmanagerui.h \
-    console.h \
     db/connectdao.h \
     db/dbutil.h \
     fileinfo.h \
@@ -55,7 +53,6 @@ FORMS += \
     backupandrecoverydialog.ui \
     connecteditui.ui \
     connectmanagerui.ui \
-    console.ui \
     mainwindow.ui \
     sftpdialog.ui \
     webconsole.ui \

@@ -8,7 +8,6 @@
 #include <QDir>
 #include <QLabel>
 
-
 MainWindow* mainwindow=NULL;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -17,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle("ishell");
-
+    setWindowIcon(QIcon(":/logo.png"));
     QList<QScreen *> list_screen =  QGuiApplication::screens();  //多显示器
     QRect rect = list_screen.at(0)->geometry();
     setMinimumSize(800, 600);

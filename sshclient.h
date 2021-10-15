@@ -16,7 +16,7 @@
 #include <iostream>
 using namespace std;
 
-#define BUFSIZE 32000
+#define READ_BUF_SIZE 1024
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
@@ -94,14 +94,12 @@ private:
 
     struct timeval timeval_out;
 
-    bool running=true;
-
     void run();
 
 
 signals:
     void errorMsg(QString errMsg);
-    void readChannelData(char data);
+    void readChannelData(QString data);
     void connectSuccess();
     void authSuccess();
     void openChannelSuccess();

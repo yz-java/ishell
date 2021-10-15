@@ -23,7 +23,7 @@ WebConsole::WebConsole(QWidget *parent,ConnectInfo* connectInfo) :
     webView = new QWebEngineView(this);
     webView->page()->setWebChannel(webChannel);
 
-    QFile file(":/html/xterm.html");
+    QFile file(":/html/xterm4/index.html");
     if (!file.open(QIODevice::ReadOnly))
     {
         return;
@@ -31,7 +31,7 @@ WebConsole::WebConsole(QWidget *parent,ConnectInfo* connectInfo) :
 
     QString htmlData = file.readAll().constData();
     webView->setHtml(htmlData);
-//    webView->load(QUrl("https://www.baidu.com"));
+//    webView->load(QUrl("http://localhost:8080"));
     webView->show();
     connect(webView,SIGNAL(loadFinished(bool)) ,this,SLOT(pageLoadFinished(bool)));
 }
@@ -78,19 +78,19 @@ void WebConsole::ssh2connect(const QString& jsMsg){
     });
 
 
-    connect(sshClient,&SSHClient::readChannelData,this,[&](char data){
-        //处理中文
-        if(data & 0x80){
-            ba.append(data);
-            if(ba.length()==3){
-                QString str(ba);
-                ba.clear();
-                WebSocketServer::instance->sendMsg(clientId,str);
-            }
-            return;
-        }
-        QString d(data);
-        WebSocketServer::instance->sendMsg(clientId,d);
+    connect(sshClient,&SSHClient::readChannelData,this,[&](QString data){
+//        //处理中文
+//        if(data & 0x80){
+//            ba.append(data);
+//            if(ba.length()==3){
+//                QString str(ba);
+//                ba.clear();
+//                WebSocketServer::instance->sendMsg(clientId,str);
+//            }
+//            return;
+//        }
+//        QString d=QString::fromStdString(data);
+        WebSocketServer::instance->sendMsg(clientId,data);
     });
 }
 
@@ -117,6 +117,15 @@ void WebConsole::closeEvent(QCloseEvent *event){
         WebSocketServer::deleteClient(clientId);
         delete this;
     });
+}
+
+void WebConsole::paintEvent(QPaintEvent *event)
+{
+//    Q_UNUSED(event);
+//    QPainter p(this);
+//    p.setPen(Qt::NoPen);
+//    p.setBrush(Qt::red);
+//    p.drawRect(rect());
 }
 
 WebConsole::~WebConsole()
