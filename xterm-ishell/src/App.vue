@@ -52,6 +52,8 @@ export default {
     terminal.open(this.$refs["terminal"]);
     this.fitAddon.fit();
 
+    // terminal.writeln("hello world")
+
     terminal.focus();
     terminal.prompt = () => {
       terminal.write("\r\n$ ");
@@ -99,8 +101,7 @@ export default {
     getRowsAndCols: function () {
       this.xterm.scrollToBottom();
       let height = document.documentElement.clientHeight;
-      
-      let rows = parseInt(height / 18);
+      let rows = parseInt(height / 17)-1;
 
       var span = $("<span>", {
         text: "qwertyuiopasdfghjklzxcvbnm",
@@ -161,12 +162,19 @@ export default {
 </script>
 
 <style>
-/* #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+body{
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+#app {
+  /* font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
-} */
+  margin-top: 60px; */
+  /* margin: 2px; */
+  /* padding: 2px; */
+}
 </style>
