@@ -11,7 +11,6 @@
 #include "db/connectdao.h"
 #include "sftpdialog.h"
 
-
 ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ConnectManagerUI)
@@ -96,6 +95,7 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent) :
         qDebug() << "双击";
         ConnectInfo info = getConnectInfo(item);
         if(info.parentId!=0){
+            this->hide();
             emit openSSHConnect(info);
         }
     });
@@ -161,12 +161,20 @@ void ConnectManagerUI::popMenu(const QPoint& p){
         }
         QAction* connectWell;
         QAction* sftpWell;
+        QAction* connectVNC;
         if(info.parentId!=0){
             connectWell=new QAction("连接",this);//连接
             connect(connectWell, &QAction::triggered,[&](){
                 emit openSSHConnect(info);
             });
             menu.addAction(connectWell);
+
+            connectVNC=new QAction("VNC连接",this);
+            connect(connectVNC, &QAction::triggered,[&](){
+                this->hide();
+                emit openVNCConnect(info);
+            });
+            menu.addAction(connectVNC);
 
             sftpWell=new QAction("文件管理",this);
             connect(sftpWell, &QAction::triggered,[&](){

@@ -50,13 +50,13 @@ SftpDialog::SftpDialog(QWidget *parent,ConnectInfo* connectInfo) :
 
         if(info.fileType==1){
             item->setIcon(0,QIcon(":/icons/folder.png"));
-            item->setText(3,"文件夹");
+            item->setText(3,"目录");
         }else if(info.fileType==2){
             item->setIcon(0,QIcon(":/icons/file.png"));
             item->setText(3,"文件");
         }else if(info.fileType==3){
             item->setIcon(0,QIcon(":/icons/folder.png"));
-            item->setText(3,"动态库");
+            item->setText(3,"符号链接");
 
         }
         item->setText(4,info.permission);
@@ -224,7 +224,10 @@ void SftpDialog::treeWidgetItemRefresh(QTreeWidgetItem* item){
 }
 
 void SftpDialog::fileUpload(QTreeWidgetItem* item){
-    QString filePath = QFileDialog::getOpenFileName(this, tr("open file"), "",  tr("*"));
+    QString filePath = QFileDialog::getOpenFileName(this, tr("选择文件"), "",  tr("*"));
+    if(filePath.isEmpty()){
+        return;
+    }
     QFileInfo info(filePath);
     QString fileName=info.fileName();
     sftpClient->scpUpload(filePath,item->text(6)+"/"+fileName);

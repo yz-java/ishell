@@ -54,6 +54,8 @@ private slots:
 signals:
     void openSSHConnect(ConnectInfo connectInfo);
 
+    void openVNCConnect(ConnectInfo connectInfo);
+
 };
 
 #endif // CONNECTMANAGERUI_H

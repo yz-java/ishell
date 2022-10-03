@@ -16,7 +16,7 @@
 #include <iostream>
 using namespace std;
 
-#define READ_BUF_SIZE 1024
+#define READ_BUF_SIZE 4096
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")

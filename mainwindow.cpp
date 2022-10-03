@@ -7,7 +7,10 @@
 #include "db/dbutil.h"
 #include <QDir>
 #include <QLabel>
-
+#include "welcomewidget.h"
+extern "C"{
+#include "SDLvncviewer.h"
+}
 MainWindow* mainwindow=NULL;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -35,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     QTimer::singleShot(100,this,[=](){
         initUI();
-        initWebSocketServer();
+//        initWebSocketServer();
     });
     connectInfo=new QLabel;
     connectInfo->setText("项目开源地址：https://github.com/yz-java/ishell    Email:yangzhaojava@gmail.com");
@@ -51,24 +54,28 @@ void MainWindow::initUI(){
     ui->tabWidget->setTabPosition(QTabWidget::North);
     ui->tabWidget->insertTab(0,new QWidget(this), QIcon(":/icons/manager.png"),"连接管理");
     ui->tabWidget->setTabToolTip(0,"连接管理");
-    webView = new QWebEngineView(this);
-    QFile file(":/html/README.html");
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
-    QString htmlData = file.readAll().constData();
-    webView->setHtml(htmlData);
-    webView->show();
+//    webView = new QWebEngineView(this);
+//    QFile file(":/html/README.html");
+//    if (!file.open(QIODevice::ReadOnly))
+//    {
+//        return;
+//    }
+//    QString htmlData = file.readAll().constData();
+//    webView->setHtml(htmlData);
+//    webView->show();
 
     ui->tabWidget->setUsesScrollButtons(true);
-    ui->tabWidget->insertTab(1,webView,QIcon(":/icons/welcome.png"),"欢迎页");
+    ui->tabWidget->insertTab(1,new welcomewidget(),QIcon(":/icons/welcome.png"),"欢迎页");
     ui->tabWidget->setTabToolTip(1,"欢迎页");
     this->ui->tabWidget->setTabsClosable(true);
     ui->tabWidget->setCurrentIndex(1);
     mainwindow=this;
     STATUS_BAR_HIGHT=ui->statusbar->height();
     connect(connectManagerUI,SIGNAL(openSSHConnect(ConnectInfo)),this,SLOT(openSSHConnect(ConnectInfo)));
+    connect(connectManagerUI,SIGNAL(openVNCConnect(ConnectInfo)),this,SLOT(openVNCConnect(ConnectInfo)));
+    connect(this,&MainWindow::alertErrorMessageBox,this,[=](QString msg){
+        QMessageBox::warning(this,"错误提示",msg);
+    });
 }
 
 void MainWindow::initWebSocketServer(){
@@ -130,4 +137,32 @@ void MainWindow::openSSHConnect(ConnectInfo connectInfo){
     ui->tabWidget->insertTab(count,new WebConsole(this,&connectInfo),QIcon(":/icons/console.png"),connectInfo.name);
     ui->tabWidget->setTabToolTip(count,connectInfo.name);
     ui->tabWidget->setCurrentIndex(count);
+}
+
+static void vncErrorCallback(char*msg)
+{
+    mainwindow->alertErrorMessageBox(QString::fromUtf8(msg));
+}
+
+void MainWindow::openVNCConnect(ConnectInfo connectInfo)
+{
+    std::thread t([=](){
+        string hostName=connectInfo.hostName.toStdString();
+        const char* host = hostName.data();
+        string userName = connectInfo.vncUserName.toStdString();
+        const char* un = userName.data();
+        string password = connectInfo.vncPassword.toStdString();
+        const char* pwd = password.data();
+        int port = connectInfo.vncPort;
+        openVNCViewer(host,un,pwd,port,vncErrorCallback);
+    });
+    t.detach();
+//    string hostName=connectInfo.hostName.toStdString();
+//    const char* host = hostName.data();
+//    string userName = connectInfo.vncUserName.toStdString();
+//    const char* un = userName.data();
+//    string password = connectInfo.vncPassword.toStdString();
+//    const char* pwd = password.data();
+//    int port = connectInfo.vncPort;
+//    openVNCViewer(host,un,pwd,port,vncErrorCallback);
 }

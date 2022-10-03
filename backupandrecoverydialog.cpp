@@ -26,6 +26,9 @@ QString toJsonStr(QList<ConnectInfo> list){
         obj.insert("authType",info.authType);
         obj.insert("publicKeyPath",info.publicKeyPath);
         obj.insert("privateKeyPath",info.privateKeyPath);
+        obj.insert("vncUserName",info.vncUserName);
+        obj.insert("vncPassword",info.vncPassword);
+        obj.insert("vncPort",info.vncPort);
         array.append(obj);
     }
     QJsonDocument document;
@@ -55,6 +58,7 @@ void BackupAndRecoveryDialog::on_pushButton_clicked()
 {
     QFileDialog* dialog=new QFileDialog();
     dialog->setFileMode(QFileDialog::Directory);
+    dialog->setWindowTitle("选择备份位置");
     if(!dialog->exec()){
         return;
     }
@@ -65,7 +69,7 @@ void BackupAndRecoveryDialog::on_pushButton_clicked()
 //恢复选择按钮
 void BackupAndRecoveryDialog::on_pushButton_2_clicked()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("open file"), "",  tr("*"));
+    QString filePath = QFileDialog::getOpenFileName(this, tr("选择文件恢复"), "",  tr("*"));
     ui->recoveryFilePath->setText(filePath);
 }
 
@@ -123,6 +127,7 @@ bool BackupAndRecoveryDialog::backupFile(QString password){
     string encrypt_data=AES::aes_cbc(data.toStdString(),key,AES_ENCRYPT);
     QString backupPath=ui->backupPath->text();
     QFile file(backupPath);
+    file.remove();
     if(file.open(QIODevice::WriteOnly)){
         file.write(encrypt_data.data(),encrypt_data.length());
     }
@@ -151,7 +156,7 @@ bool BackupAndRecoveryDialog::recovery(QString password){
        ConnectDao::GetInstance()->addConnectInfo(&info);
 
     }else if(document.isArray()){
-        ConnectDao::GetInstance()->deleteAll();
+       ConnectDao::GetInstance()->deleteAll();
        for(auto v:document.array()){
            ConnectInfo info = ConnectInfo::jsonObjToConnectInfo(v.toObject());
            ConnectDao::GetInstance()->addConnectInfo(&info);

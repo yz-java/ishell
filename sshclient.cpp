@@ -54,6 +54,7 @@ bool SSHClient::openSession(){
         return false;
     }
     qDebug() << "打开会话成功";
+    libssh2_session_set_timeout(session,0);
     return true;
 }
 
@@ -97,7 +98,7 @@ bool SSHClient::open_channel(){
         return false;
     }
 
-    if (libssh2_channel_request_pty( channel, "vt100") != 0) {
+    if (libssh2_channel_request_pty( channel, "xterm") != 0) {
        fprintf(stderr, "Failed to request a pty\n");
        emit errorMsg("Failed to request a pty");
        stop();
@@ -180,6 +181,7 @@ void SSHClient::run(){
     while (true) {
         if (libssh2_channel_eof(channel) == 1){
             free (fds);
+            emit readChannelData("断开连接");
             break;
         }
 
@@ -189,11 +191,9 @@ void SSHClient::run(){
             if(length<=0){
                 continue;
             }
-            char* d = new char[length];
-            memcpy(d,buf,length);
-            QString data = QString::fromUtf8(d,length);
+            QByteArray buffer(buf,length);
+            QString data = QString::fromUtf8(buffer);
             emit readChannelData(data);
-            free(d);
 //            fprintf(stdout, "%c", buf);
 //            fflush(stdout);
         }

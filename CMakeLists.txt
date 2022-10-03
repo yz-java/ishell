@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(ishell LANGUAGES CXX)
+project(ishell)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -15,11 +15,14 @@ INCLUDE_DIRECTORIES(
   "./"
   "Libs/openssl/include"
   "Libs/ssh2/include"
+  "Libs/vnc/include"
+  "/usr/include/SDL2"
 )
 
 LINK_DIRECTORIES(
   "Libs/openssl/lib"
   "Libs/ssh2/lib"
+  "Libs/vnc/lib"
 )
 set(target_link_libraries_flag "crypto" "ssl" "ssh2")
 IF (WIN32)
@@ -52,8 +55,7 @@ ENDIF ()
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
 
-
-FILE(GLOB SRC_LIST_CPP *.cpp)
+FILE(GLOB SRC_LIST_CPP *.c *.cpp *.h)
 
 file(GLOB_RECURSE QRC_SOURCE_FILES ${PROJECT_SOURCE_DIR}/*.qrc)
 
@@ -80,6 +82,9 @@ target_link_libraries(
   Qt${QT_VERSION_MAJOR}::Sql
   Qt${QT_VERSION_MAJOR}::Concurrent
   Qt${QT_VERSION_MAJOR}::WebSockets
+  vncclient
+  SDL2
+  pthread
   ${target_link_libraries_flag}
 )
 

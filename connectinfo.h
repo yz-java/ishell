@@ -34,6 +34,12 @@ public:
     //1=帐号密码  2=公私钥
     int authType=1;
 
+    QString vncUserName = "";
+
+    QString vncPassword = "";
+
+    int vncPort = 5900;
+
     static ConnectInfo jsonStrToConnectInfo(QString jsonStr);
 
     static ConnectInfo jsonObjToConnectInfo(QJsonObject obj);

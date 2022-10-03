@@ -88,7 +88,7 @@ bool ConnectDao::addConnectInfo(ConnectInfo* info){
     ConnectInfo ci= getLastConnectInfo();
     int id=ci.id+1;
     QSqlQuery sql_query;
-    QString sql="insert into connect values(?,?,?,?,?,?,?,?,?,?,?)";
+    QString sql="insert into connect values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     sql_query.prepare(sql);
     sql_query.addBindValue(id);
     sql_query.addBindValue(info->parentId);
@@ -101,6 +101,9 @@ bool ConnectDao::addConnectInfo(ConnectInfo* info){
     sql_query.addBindValue(info->publicKeyPath);
     sql_query.addBindValue(info->privateKeyPath);
     sql_query.addBindValue(info->passPhrase);
+    sql_query.addBindValue(info->vncUserName);
+    sql_query.addBindValue(info->vncPassword);
+    sql_query.addBindValue(info->vncPort);
     if(sql_query.exec())
     {
         info->id=id;
@@ -157,7 +160,10 @@ bool ConnectDao::updateConnectById(ConnectInfo info){
                 "password=?,"
                 "public_key_path=?,"
                 "private_key_path=?,"
-                "passPhrase=?"
+                "passPhrase=?,"
+                "vnc_username=?,"
+                "vnc_password=?,"
+                "vnc_port=?"
                 " where id=?";
     sql_query.prepare(sql);
     sql_query.addBindValue(info.parentId);
@@ -170,6 +176,9 @@ bool ConnectDao::updateConnectById(ConnectInfo info){
     sql_query.addBindValue(info.publicKeyPath);
     sql_query.addBindValue(info.privateKeyPath);
     sql_query.addBindValue(info.passPhrase);
+    sql_query.addBindValue(info.vncUserName);
+    sql_query.addBindValue(info.vncPassword);
+    sql_query.addBindValue(info.vncPort);
     sql_query.addBindValue(info.id);
     if(sql_query.exec())
     {
@@ -245,6 +254,12 @@ ConnectInfo ConnectDao::toConnectInfo(QSqlQuery* sqlQuery){
     connectInfo.privateKeyPath=private_key_path;
     QString passPhrase = sqlQuery->value(10).toString();
     connectInfo.passPhrase=passPhrase;
+    QString vncUserName = sqlQuery->value(11).toString();
+    connectInfo.vncUserName=vncUserName;
+    QString vncPassword = sqlQuery->value(12).toString();
+    connectInfo.vncPassword=vncPassword;
+    int vncPort = sqlQuery->value(13).toInt();
+    connectInfo.vncPort=vncPort;
     return connectInfo;
 }
 

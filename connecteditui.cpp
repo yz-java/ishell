@@ -20,7 +20,7 @@ ConnectEditUI::ConnectEditUI(QWidget *parent,QString title) :
 void ConnectEditUI::refreshPage(){
     ui->name->setText(info.name);
     ui->hostName->setText(info.hostName);
-    ui->port->setText(QString::number(info.port));
+    ui->sshPort->setText(QString::number(info.port));
     ui->authType->setCurrentIndex(info.authType-1);
     ui->userName->setText(info.username);
     ui->password->setText(info.password);
@@ -32,7 +32,9 @@ void ConnectEditUI::refreshPage(){
         authType=info.authType-1;
     }
     ui->authType->setCurrentIndex(authType);
-//    this->on_authType_currentIndexChanged(authType);
+    ui->vncUserName->setText(info.vncUserName);
+    ui->vncPassword->setText(info.vncPassword);
+    ui->vncPort->setText(QString::number(info.vncPort));
 }
 
 ConnectEditUI::~ConnectEditUI()
@@ -68,7 +70,7 @@ void ConnectEditUI::on_authType_currentIndexChanged(int index)
 
 void ConnectEditUI::on_selectPrivateKeyFileButton_clicked()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("open file"), "",  tr("*"));
+    QString filePath = QFileDialog::getOpenFileName(this, tr("选择私钥文件"), "",  tr("*"));
     ui->privateKeyFilePath->setText(filePath);
 }
 
@@ -76,13 +78,16 @@ void ConnectEditUI::on_save_clicked()
 {
     info.name=ui->name->text();
     info.hostName=ui->hostName->text();
-    info.port=ui->port->text().toInt();
+    info.port=ui->sshPort->text().toUInt();
     info.authType=ui->authType->currentIndex()+1;
     info.username=ui->userName->text();
     info.password=ui->password->text();
     info.publicKeyPath=ui->publickKeyFilePath->text();
     info.privateKeyPath=ui->privateKeyFilePath->text();
     info.passPhrase=ui->passPhrase->text();
+    info.vncUserName=ui->vncUserName->text();
+    info.vncPassword=ui->vncPassword->text();
+    info.vncPort=ui->vncPort->text().toUInt();
     if(info.parentId==0){
         info.parentId=info.id;
         bool result=ConnectDao::GetInstance()->addConnectInfo(&info);
@@ -107,7 +112,7 @@ void ConnectEditUI::setConnectInfo(ConnectInfo info){
 
 void ConnectEditUI::on_selectPublicKeyFileButton_clicked()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("open file"), "",  tr("*"));
+    QString filePath = QFileDialog::getOpenFileName(this, tr("选择公钥文件"), "",  tr("*"));
     ui->publickKeyFilePath->setText(filePath);
 }
 
