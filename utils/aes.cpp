@@ -1,4 +1,4 @@
-#include "aes.h"
+﻿#include "aes.h"
 #include <string.h>
 #include <QFile>
 
@@ -70,7 +70,7 @@ int AES::aesEncryptFile(QString in_file_path, QString out_file_path,const char K
 
     QFile fin(in_file_path);
     if(!fin.exists()){
-        cout<< "文件不存在" << endl;
+        cout << "文件不存在" << endl;
         return 0;
     }
     bool isOk=fin.open(QIODevice::ReadOnly);
@@ -118,7 +118,7 @@ int AES::aesDecryptFile(QString in_file_path, QString out_file_path,const char K
 
     QFile fin(in_file_path);
     if(!fin.exists()){
-        cout<< "文件不存在" << endl;
+        cout << "文件不存在" << endl;
         return 0;
     }
     bool isOk=fin.open(QIODevice::ReadOnly);

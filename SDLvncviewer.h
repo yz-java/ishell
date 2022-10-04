@@ -1,4 +1,4 @@
-#ifndef SDLVNCVIEWER_H
+﻿#ifndef SDLVNCVIEWER_H
 #define SDLVNCVIEWER_H
 #include <stdlib.h>
 

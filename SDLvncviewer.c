@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @example SDLvncviewer.c
  * Once built, you can run it via `SDLvncviewer <remote-host>`.
  */
@@ -63,7 +63,7 @@ static rfbBool resize(rfbClient *client)
                                             depth,
                                             0, 0, 0, 0);
     if (!sdl)
-        rfbClientErr("resize: error creating surface: %s\n", SDL_GetError());
+        printf("resize: error creating surface: %s\n", SDL_GetError());
 
     rfbClientSetClientData(client, SDL_Init, sdl);
     client->width = sdl->pitch / (depth / 8);
@@ -88,7 +88,7 @@ static rfbBool resize(rfbClient *client)
                                      height,
                                      sdlFlags);
         if (!sdlWindow)
-            rfbClientErr("resize: error creating window: %s\n", SDL_GetError());
+            printf("resize: error creating window: %s\n", SDL_GetError());
     }
     else
     {
@@ -100,7 +100,7 @@ static rfbBool resize(rfbClient *client)
     {
         sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_ACCELERATED);
         if (!sdlRenderer)
-            rfbClientErr("resize: error creating renderer: %s\n", SDL_GetError());
+            printf("resize: error creating renderer: %s\n", SDL_GetError());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear"); /* make the scaled rendering look smoother. */
     }
     SDL_RenderSetLogicalSize(sdlRenderer, width, height); /* this is a departure from the SDL1.2-based version, but more in the sense of a VNC viewer in keeeping aspect ratio */
@@ -113,7 +113,7 @@ static rfbBool resize(rfbClient *client)
                                    SDL_TEXTUREACCESS_STREAMING,
                                    width, height);
     if (!sdlTexture)
-        rfbClientErr("resize: error creating texture: %s\n", SDL_GetError());
+        printf("resize: error creating texture: %s\n", SDL_GetError());
     return TRUE;
 }
 
@@ -346,13 +346,13 @@ static void update(rfbClient *cl, int x, int y, int w, int h)
     SDL_Surface *sdl = rfbClientGetClientData(cl, SDL_Init);
     /* update texture from surface->pixels */
     SDL_Rect r = {x, y, w, h};
-    if (SDL_UpdateTexture(sdlTexture, &r, sdl->pixels + y * sdl->pitch + x * 4, sdl->pitch) < 0)
-        rfbClientErr("update: failed to update texture: %s\n", SDL_GetError());
+    if (SDL_UpdateTexture(sdlTexture, &r, (char*)sdl->pixels + y * sdl->pitch + x * 4, sdl->pitch) < 0)
+        printf("update: failed to update texture: %s\n", SDL_GetError());
     /* copy texture to renderer and show */
     if (SDL_RenderClear(sdlRenderer) < 0)
-        rfbClientErr("update: failed to clear renderer: %s\n", SDL_GetError());
+        printf("update: failed to clear renderer: %s\n", SDL_GetError());
     if (SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL) < 0)
-        rfbClientErr("update: failed to copy texture to renderer: %s\n", SDL_GetError());
+        printf("update: failed to copy texture to renderer: %s\n", SDL_GetError());
     SDL_RenderPresent(sdlRenderer);
 }
 
@@ -467,7 +467,7 @@ static rfbBool handleSDLEvent(rfbClient *cl, SDL_Event *e)
                 char *text = SDL_GetClipboardText();
                 if (text)
                 {
-                    rfbClientLog("sending clipboard text '%s'\n", text);
+                    printf("sending clipboard text '%s'\n", text);
                     SendClientCutText(cl, text, strlen(text));
                 }
             }
@@ -478,13 +478,13 @@ static rfbBool handleSDLEvent(rfbClient *cl, SDL_Event *e)
             {
                 SendKeyEvent(cl, XK_Alt_R, FALSE);
                 rightAltKeyDown = FALSE;
-                rfbClientLog("released right Alt key\n");
+                printf("released right Alt key\n");
             }
             if (leftAltKeyDown)
             {
                 SendKeyEvent(cl, XK_Alt_L, FALSE);
                 leftAltKeyDown = FALSE;
-                rfbClientLog("released left Alt key\n");
+                printf("released left Alt key\n");
             }
             break;
         }
@@ -577,39 +577,38 @@ static rfbBool handleSDLEvent(rfbClient *cl, SDL_Event *e)
         cleanup(cl);
         return FALSE;
     default:
-        rfbClientLog("ignore SDL event: 0x%x\n", e->type);
+        printf("ignore SDL event: 0x%x\n", e->type);
     }
     return TRUE;
 }
 
 static void got_selection(rfbClient *cl, const char *text, int len)
 {
-    rfbClientLog("received clipboard text '%s'\n", text);
+    printf("received clipboard text '%s'\n", text);
     if (SDL_SetClipboardText(text) != 0)
-        rfbClientErr("could not set received clipboard text: %s\n", SDL_GetError());
+        printf("could not set received clipboard text: %s\n", SDL_GetError());
 }
 
 static rfbCredential *get_credential(rfbClient *cl, int credentialType)
 {
     rfbCredential *c = malloc(sizeof(rfbCredential));
-    //    c->userCredential.username = malloc(RFB_BUF_SIZE);
-    //    c->userCredential.password = malloc(RFB_BUF_SIZE);
+//    c->userCredential.username = malloc(RFB_BUF_SIZE);
+//    c->userCredential.password = malloc(RFB_BUF_SIZE);
+//    if (credentialType != rfbCredentialTypeUser)
+//    {
+//        printf("something else than username and password required for authentication\n");
+//        return NULL;
+//    }
 
-    //    if (credentialType != rfbCredentialTypeUser)
-    //    {
-    //        rfbClientErr("something else than username and password required for authentication\n");
-    //        return NULL;
-    //    }
+//    printf("username and password required for authentication!\n");
+//    printf("user: ");
+//    fgets(c->userCredential.username, RFB_BUF_SIZE, stdin);
+//    printf("pass: ");
+//    fgets(c->userCredential.password, RFB_BUF_SIZE, stdin);
 
-    //    rfbClientLog("username and password required for authentication!\n");
-    //    printf("user: ");
-    //    fgets(c->userCredential.username, RFB_BUF_SIZE, stdin);
-    //    printf("pass: ");
-    //    fgets(c->userCredential.password, RFB_BUF_SIZE, stdin);
-
-    //    /* remove trailing newlines */
-    //    c->userCredential.username[strcspn(c->userCredential.username, "\n")] = 0;
-    //    c->userCredential.password[strcspn(c->userCredential.password, "\n")] = 0;
+//    /* remove trailing newlines */
+//    c->userCredential.username[strcspn(c->userCredential.username, "\n")] = 0;
+//    c->userCredential.password[strcspn(c->userCredential.password, "\n")] = 0;
     c->userCredential.username = vn;
     c->userCredential.password = vp;
     return c;
@@ -618,9 +617,10 @@ static rfbCredential *get_credential(rfbClient *cl, int credentialType)
 static char *ReadPassword(rfbClient *client)
 {
     int size = strlen(vp);
-    char *p = calloc(size, sizeof(char));
-    memcpy(p, vp, size);
-    return p;
+    char *passwd = malloc(size);
+    memset(passwd,0,strlen(passwd));
+    memcpy(passwd, vp, size);
+    return passwd;
 }
 
 void openVNCViewer(const char *host, const char *vncName, const char *vncPassword, const int port,ErrorCallBack errorCallback)
@@ -630,7 +630,7 @@ void openVNCViewer(const char *host, const char *vncName, const char *vncPasswor
     int size = strlen(host);
     char* hostName = malloc(sizeof (char)*size);
     strcpy(hostName,host);
-    rfbClientErr("host name %s\n",hostName);
+    printf("host name %s\n",hostName);
     SDL_Event e;
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE);
 
@@ -647,12 +647,12 @@ void openVNCViewer(const char *host, const char *vncName, const char *vncPasswor
 //    cl->GetCredential = get_credential;
     cl->GetPassword = ReadPassword;
     cl->listenPort = port;
-//    cl->listen6Port = port;
+    cl->listen6Port = port;
     cl->serverHost = hostName;
 
-    if (!rfbInitClient(cl, 0, NULL))
+    if (!rfbInitClient(cl,0,NULL))
     {
-        errorCallback("VNC客户端初始化失败");
+        errorCallback("vnc client init fail");
         return;
     }
 

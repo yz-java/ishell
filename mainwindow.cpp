@@ -157,12 +157,4 @@ void MainWindow::openVNCConnect(ConnectInfo connectInfo)
         openVNCViewer(host,un,pwd,port,vncErrorCallback);
     });
     t.detach();
-//    string hostName=connectInfo.hostName.toStdString();
-//    const char* host = hostName.data();
-//    string userName = connectInfo.vncUserName.toStdString();
-//    const char* un = userName.data();
-//    string password = connectInfo.vncPassword.toStdString();
-//    const char* pwd = password.data();
-//    int port = connectInfo.vncPort;
-//    openVNCViewer(host,un,pwd,port,vncErrorCallback);
 }

@@ -1,4 +1,4 @@
-#include "backupandrecoverydialog.h"
+﻿#include "backupandrecoverydialog.h"
 #include "ui_backupandrecoverydialog.h"
 #include <QFileDialog>
 #include <QMessageBox>
