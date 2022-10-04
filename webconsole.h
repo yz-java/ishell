@@ -35,6 +35,7 @@ private:
     Ui::WebConsole *ui;
     void resizeEvent(QResizeEvent *);
     QByteArray ba;
+    QByteArray cnBuffer;
     bool openChannelSeccess=false;
     int rows;
     int cols;

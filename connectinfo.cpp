@@ -44,5 +44,12 @@ ConnectInfo ConnectInfo::jsonObjToConnectInfo(QJsonObject obj){
     info.port=port;
     int parentId = obj.take("parentId").toInt();
     info.parentId=parentId;
+
+    QString vncUserName = obj.take("vncUserName").toString();
+    QString vncPassword = obj.take("vncPassword").toString();
+    int vncPort = obj.take("vncPort").toInt();
+    info.vncUserName=vncUserName;
+    info.vncPassword=vncPassword;
+    info.vncPort=vncPort;
     return info;
 }

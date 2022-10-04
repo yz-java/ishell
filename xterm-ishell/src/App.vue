@@ -1,17 +1,14 @@
 <template>
-  <div id="app">
-    <!-- <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-    <div id="terminal" ref="terminal"></div>
-  </div>
+  <div id="terminal" ref="terminal"></div>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
 import "xterm/css/xterm.css";
 import qwc from "./common/js/qwebchannel.js";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
+// import { SearchAddon } from 'xterm-addon-search';
+// import { WebLinksAddon } from 'xterm-addon-web-links';
 export default {
   name: "App",
   components: {
@@ -23,19 +20,19 @@ export default {
       fitAddon: null,
       rows: 40,
       cols: 100,
+      fontSize:16,
       clientId: null,
     };
   },
-  created(){
-    window.setClientId=this.setClientId
-  },
   mounted() {
     window.setClientId=this.setClientId
+    window.xtermWrite=this.xtermWrite
+    window.connectSuccess=this.connectSuccess
     
     new qwc.QWebChannel(qt.webChannelTransport, function (channel) {
       window.core = channel.objects.core;
     });
-
+    
     const terminal = new Terminal({
       termName: "xterm",
       useStyle: true,
@@ -44,77 +41,55 @@ export default {
       cursorBlink: true,
       visualBell: true,
       colors: Terminal.xtermColors,
+      cursorStyle:"block",
+      fontSize:this.fontSize,
+      scrollback: 200, //终端中的回滚量
       rendererType: "dom",
+      // rendererType: "canvas",
+      // lineHeight: 1,
+      // cols: 80,
+      // rows: 24,
+      theme: {
+        // foreground: "#202935", //字体
+        background: "#202935", //背景色
+        cursorAccent:"#202935",
+        // cursor: "help", //设置光标
+      }
     });
     this.xterm = terminal;
+    terminal.open(this.$refs["terminal"]);
     this.fitAddon = new FitAddon();
     terminal.loadAddon(this.fitAddon);
-    terminal.open(this.$refs["terminal"]);
     this.fitAddon.fit();
-
     terminal.focus();
-    terminal.prompt = () => {
-      terminal.write("\r\n$ ");
-    };
 
     let rc = this.getRowsAndCols();
     terminal.resize(rc.cols, rc.rows);
 
-    window.addEventListener("resize", () => {
-      this.fitAddon.fit();
-      let rc = this.getRowsAndCols();
-      terminal.resize(rc.cols, rc.rows);
-      this.requestPtySize();
-    });
+    window.addEventListener("resize",this.onResize);
 
     if (terminal._initialized) return;
     // 初始化
     terminal._initialized = true;
-    // terminal.prompt();
-    // 添加事件监听器，支持输入方法
-    // terminal.onKey((e) => {
-    //   const printable =
-    //     !e.domEvent.altKey &&
-    //     !e.domEvent.altGraphKey &&
-    //     !e.domEvent.ctrlKey &&
-    //     !e.domEvent.metaKey;
-    //   if (e.domEvent.keyCode === 13) {
-    //     terminal.prompt();
-    //   } else if (e.domEvent.keyCode === 8) {
-    //     // back 删除的情况
-    //     if (terminal._core.buffer.x > 2) {
-    //       terminal.write("\b \b");
-    //     }
-    //   } else if (printable) {
-    //     // terminal.write(e.key);
-    //   }
-    //   console.log(1, "print", e.key);
-    // });
     terminal.onData((key) => {
-      // terminal.write(key);
       window.core.recieveJsMessage(key);
     });
   },
   methods: {
+    onResize: function () {
+      let rc = this.getRowsAndCols();
+      this.xterm.resize(rc.cols, rc.rows);
+      this.requestPtySize();
+    },
     getRowsAndCols: function () {
-      this.xterm.scrollToBottom();
-      let height = document.documentElement.clientHeight;
-      
-      let rows = parseInt(height / 18);
-
-      var span = $("<span>", {
-        text: "qwertyuiopasdfghjklzxcvbnm",
-      });
-      $("#terminal").append(span);
-      var span_width = span.width();
-      // var span_height = span.height();
-      span.remove();
-
-      let width = document.body.clientWidth;
-      let cols = parseInt(width / (span_width/26));
+      this.fitAddon.fit();
+      // this.xterm.scrollToBottom();
+      var height = document.getElementById("terminal").clientHeight
+      var lineHeight = height/this.xterm.rows
+      var rows = parseInt(document.documentElement.clientHeight/lineHeight)-1
       return {
         rows: rows,
-        cols: cols,
+        cols: this.xterm.cols,
       };
     },
     requestPtySize: function () {
@@ -131,6 +106,14 @@ export default {
       setTimeout(()=>{
         window.core.ssh2connect("");
       },2000)
+    },
+
+    xtermWrite:function(data){
+      this.xterm.write(data.data);
+    },
+
+    connectSuccess:function(){
+      this.requestPtySize()
     },
 
     open_websocket: function () {
@@ -161,12 +144,29 @@ export default {
 </script>
 
 <style>
-/* #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-} */
+body{
+  margin: 0;
+  padding: 0;
+}
+#terminal{
+  margin: 0;
+  padding: 0;
+}
+::-webkit-scrollbar {
+  /*滚动条整体样式*/
+  width: 6px; /*高宽分别对应横竖滚动条的尺寸*/
+  height: 1px;
+}
+::-webkit-scrollbar-thumb {
+  /*滚动条里面小方块*/
+  border-radius: 10px;
+  box-shadow: inset 0 0 5px rgba(97, 184, 179, 0.1);
+  background: #202935;
+}
+::-webkit-scrollbar-track {
+  /*滚动条里面轨道*/
+  box-shadow: inset 0 0 5px rgba(87, 175, 187, 0.1);
+  border-radius: 10px;
+  background: #ededed;
+}
 </style>

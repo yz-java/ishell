@@ -27,12 +27,17 @@ public:
 protected:
     void resizeEvent(QResizeEvent *);
 
+signals:
+    void alertErrorMessageBox(QString msg);
+
 private slots:
     void on_tabWidget_currentChanged(int index);
 
     void on_tabWidget_tabCloseRequested(int index);
 
     void openSSHConnect(ConnectInfo connectInfo);
+
+    void openVNCConnect(ConnectInfo connectInfo);
 
 private:
     Ui::MainWindow *ui;
