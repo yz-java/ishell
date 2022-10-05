@@ -11,34 +11,19 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-INCLUDE_DIRECTORIES(
-  "./"
-  "Libs/openssl/include"
-  "Libs/ssh2/include"
-  "Libs/vnc/include"
-  "/usr/include/SDL2"
-)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-LINK_DIRECTORIES(
-  "Libs/openssl/lib"
-  "Libs/ssh2/lib"
-  "Libs/vnc/lib"
-)
-set(target_link_libraries_flag "crypto" "ssl" "ssh2" "pthread")
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
+
+set(target_link_libraries_flag "ssh2" "pthread")
 IF (WIN32)
   MESSAGE(STATUS "Now is windows")
 
-  include_directories(
-      "Libs/sdl2/include/SDL2"
-      "Libs/zlib/include"
-  )
-  link_directories(
-      "Libs/sdl2/lib"
-      "Libs/zlib/lib"
-  )
-
   set(executable_flag "WIN32" "app_win32.rc")
-  set(target_link_libraries_flag "ws2_32" "libcrypto" "libssl" "libssh2" "zlib")
+  set(target_link_libraries_flag "ws2_32" "libssh2" "zlib")
+  set(LibVNCServer_PATH "")
+  set(Libssh2_PATH "")
 
 #   set(QT_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5")
 #   set(Qt5_DIR "C:/Qt/Qt5.12.10/5.12.10/msvc2017_64/lib/cmake/Qt5")
@@ -58,11 +43,24 @@ ELSEIF (APPLE)
   MESSAGE(STATUS "Now is Apple systens.")
 
 ELSEIF (UNIX)
-        MESSAGE(STATUS "Now is UNIX-like OS's.")
+  MESSAGE(STATUS "Now is UNIX-like OS's.")
+  set(LibVNCServer_PATH "/home/yangzhao/project/libvncserver/Release")
+  set(Libssh2_PATH "/home/yangzhao/project/libssh2/Release")
 ENDIF ()
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebSockets WebChannel WebEngineWidgets REQUIRED)
+find_package(OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIR})
+
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
+
+find_package(Libssh2 REQUIRED)
+include_directories(${Libssh2_INCLUDE_DIR})
+link_directories(${Libssh2_LIBRARY_DIR})
+
+find_package(LibVNCServer REQUIRED)
+include_directories(${LibVNCServer_INCLUDE_DIR})
+link_directories(${LibVNCServer_LIBRARY_DIR})
 
 FILE(GLOB SRC_LIST_CPP *.c *.cpp *.h)
 
@@ -97,6 +95,7 @@ target_link_libraries(
   Qt${QT_VERSION_MAJOR}::WebSockets
   vncclient
   SDL2
+  ${OPENSSL_LIBRARIES}
   ${target_link_libraries_flag}
 )
 
