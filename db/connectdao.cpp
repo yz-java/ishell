@@ -88,7 +88,7 @@ bool ConnectDao::addConnectInfo(ConnectInfo* info){
     ConnectInfo ci= getLastConnectInfo();
     int id=ci.id+1;
     QSqlQuery sql_query;
-    QString sql="insert into connect values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    QString sql="insert into connect values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     sql_query.prepare(sql);
     sql_query.addBindValue(id);
     sql_query.addBindValue(info->parentId);
@@ -104,6 +104,9 @@ bool ConnectDao::addConnectInfo(ConnectInfo* info){
     sql_query.addBindValue(info->vncUserName);
     sql_query.addBindValue(info->vncPassword);
     sql_query.addBindValue(info->vncPort);
+    sql_query.addBindValue(info->rdpUserName);
+    sql_query.addBindValue(info->rdpPassword);
+    sql_query.addBindValue(info->rdpPort);
     if(sql_query.exec())
     {
         info->id=id;
@@ -163,7 +166,10 @@ bool ConnectDao::updateConnectById(ConnectInfo info){
                 "passPhrase=?,"
                 "vnc_username=?,"
                 "vnc_password=?,"
-                "vnc_port=?"
+                "vnc_port=?,"
+                "rdp_username=?,"
+                "rdp_password=?,"
+                "rdp_port=?"
                 " where id=?";
     sql_query.prepare(sql);
     sql_query.addBindValue(info.parentId);
@@ -179,6 +185,9 @@ bool ConnectDao::updateConnectById(ConnectInfo info){
     sql_query.addBindValue(info.vncUserName);
     sql_query.addBindValue(info.vncPassword);
     sql_query.addBindValue(info.vncPort);
+    sql_query.addBindValue(info.rdpUserName);
+    sql_query.addBindValue(info.rdpPassword);
+    sql_query.addBindValue(info.rdpPort);
     sql_query.addBindValue(info.id);
     if(sql_query.exec())
     {
@@ -260,6 +269,13 @@ ConnectInfo ConnectDao::toConnectInfo(QSqlQuery* sqlQuery){
     connectInfo.vncPassword=vncPassword;
     int vncPort = sqlQuery->value(13).toInt();
     connectInfo.vncPort=vncPort;
+
+    QString rdpUserName = sqlQuery->value(14).toString();
+    connectInfo.rdpUserName=rdpUserName;
+    QString rdpPassword = sqlQuery->value(15).toString();
+    connectInfo.rdpPassword=rdpPassword;
+    int rdpPort = sqlQuery->value(16).toInt();
+    connectInfo.rdpPort=rdpPort;
     return connectInfo;
 }
 

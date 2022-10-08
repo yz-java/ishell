@@ -39,6 +39,8 @@ private slots:
 
     void openVNCConnect(ConnectInfo connectInfo);
 
+    void openRDPConnect(ConnectInfo connectInfo);
+
 private:
     Ui::MainWindow *ui;
     ConnectManagerUI *connectManagerUI;

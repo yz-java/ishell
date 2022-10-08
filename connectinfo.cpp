@@ -41,7 +41,7 @@ ConnectInfo ConnectInfo::jsonObjToConnectInfo(QJsonObject obj){
     QString passPhrase = obj.take("passPhrase").toString();
     info.passPhrase=passPhrase;
     int port = obj.take("port").toInt();
-    info.port=port;
+    info.port=port==0?22:port;
     int parentId = obj.take("parentId").toInt();
     info.parentId=parentId;
 
@@ -50,6 +50,13 @@ ConnectInfo ConnectInfo::jsonObjToConnectInfo(QJsonObject obj){
     int vncPort = obj.take("vncPort").toInt();
     info.vncUserName=vncUserName;
     info.vncPassword=vncPassword;
-    info.vncPort=vncPort;
+    info.vncPort=vncPort==0?5900:vncPort;
+
+    QString rdpUserName = obj.take("rdpUserName").toString();
+    QString rdpPassword = obj.take("rdpPassword").toString();
+    int rdpPort = obj.take("vncPort").toInt();
+    info.rdpUserName=rdpUserName;
+    info.rdpPassword=rdpPassword;
+    info.rdpPort=rdpPort==0?3389:rdpPort;
     return info;
 }

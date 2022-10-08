@@ -40,6 +40,12 @@ public:
 
     int vncPort = 5900;
 
+    QString rdpUserName = "";
+
+    QString rdpPassword = "";
+
+    int rdpPort = 3389;
+
     static ConnectInfo jsonStrToConnectInfo(QString jsonStr);
 
     static ConnectInfo jsonObjToConnectInfo(QJsonObject obj);

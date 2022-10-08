@@ -32,7 +32,7 @@ void DBUtil::init(){
         qDebug() << "Error: Failed to connect database." << database.lastError();
     }
     QSqlQuery sql_query;
-    QString create_sql = "create table connect (id int primary key,parent_id int,auth_type int,name varchar(30), host_name varchar(100),port int,user_name varchar(100),password varchar(100),public_key_path varchar(100),private_key_path varchar(100),passPhrase varchar(100),vnc_username varchar(100),vnc_password varchar(100),vnc_port int)";
+    QString create_sql = "create table connect (id int primary key,parent_id int,auth_type int,name varchar(30), host_name varchar(100),port int,user_name varchar(100),password varchar(100),public_key_path varchar(100),private_key_path varchar(100),passPhrase varchar(100),vnc_username varchar(100),vnc_password varchar(100),vnc_port int,rdp_username varchar(100),rdp_password varchar(100),rdp_port int)";
     sql_query.prepare(create_sql);
     if(!sql_query.exec())
     {

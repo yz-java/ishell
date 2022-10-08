@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QtConcurrent>
 #include <QMutex>
+#include <QHostInfo>
 #define BUFFER_SIZE 1048576
 
 QMutex mutexlock;
@@ -25,7 +26,9 @@ bool SFTPClient::connect()
     sock = socket(AF_INET, SOCK_STREAM, 0);
     sin.sin_family = AF_INET;
     sin.sin_port = htons(connectInfo.port);
-    sin.sin_addr.s_addr = inet_addr(connectInfo.hostName.toStdString().data());
+    QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
+    QString hostName = info.addresses().first().toString();
+    sin.sin_addr.s_addr = inet_addr(hostName.toStdString().data());
     if (::connect(sock, (struct sockaddr *)&sin, sizeof(struct sockaddr_in)) != 0)
     {
         fprintf(stderr, "Failed to established connection!\n");

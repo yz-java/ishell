@@ -56,6 +56,8 @@ signals:
 
     void openVNCConnect(ConnectInfo connectInfo);
 
+    void openRDPConnect(ConnectInfo connectInfo);
+
 };
 
 #endif // CONNECTMANAGERUI_H

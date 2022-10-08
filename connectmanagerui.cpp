@@ -162,6 +162,7 @@ void ConnectManagerUI::popMenu(const QPoint& p){
         QAction* connectWell;
         QAction* sftpWell;
         QAction* connectVNC;
+        QAction* connectRDP;
         if(info.parentId!=0){
             connectWell=new QAction("连接",this);//连接
             connect(connectWell, &QAction::triggered,[&](){
@@ -175,6 +176,14 @@ void ConnectManagerUI::popMenu(const QPoint& p){
                 emit openVNCConnect(info);
             });
             menu.addAction(connectVNC);
+#ifdef UNIX
+            connectRDP=new QAction("RDP连接",this);
+            connect(connectRDP, &QAction::triggered,[&](){
+                this->hide();
+                emit openRDPConnect(info);
+            });
+            menu.addAction(connectRDP);
+#endif
 
             sftpWell=new QAction("文件管理",this);
             connect(sftpWell, &QAction::triggered,[&](){

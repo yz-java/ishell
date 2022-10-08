@@ -1,11 +1,13 @@
 ﻿#include "sshclient.h"
 #include <QTimer>
-
+#include <QHostInfo>
 SSHClient::SSHClient(QObject *parent)
 {
 
 }
 SSHClient::SSHClient(QString hostName,QString port,QString username,const QString password){
+    QHostInfo info = QHostInfo::fromName(hostName);
+    hostName = info.addresses().first().toString();
     this->hostaddr = inet_addr(hostName.toStdString().data());
     this->port =  htons(atoi(port.toStdString().data()));
     this->username = username;
@@ -16,6 +18,8 @@ SSHClient::SSHClient(QString hostName,QString port,QString username,const QStrin
 }
 
 SSHClient::SSHClient(QString hostName,QString port,QString username,QString publicKeyPath,QString privateKeyPath,QString passPhrase){
+    QHostInfo info = QHostInfo::fromName(hostName);
+    hostName = info.addresses().first().toString();
     this->hostaddr = inet_addr(hostName.toStdString().data());
     this->port =  htons(atoi(port.toStdString().data()));
     this->username = username;

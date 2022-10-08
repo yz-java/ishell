@@ -84,40 +84,6 @@ void WebConsole::ssh2connect(const QString& jsMsg){
     connect(sshClient,&SSHClient::readChannelData,this,[&](QString data){
         QJsonObject obj;
         QJsonDocument doc;
-//        QByteArray buffer = data.toUtf8();
-//        int length = buffer.length();
-//        if(length>3){
-//            int i=length-2;
-//            char c1 = buffer.at(i);
-//            char c2 = buffer.at(i+1);
-//            if(c1&0x80){
-//                QByteArray dataArray=buffer.mid(0,i);
-//                ba.append(cnBuffer);
-//                cnBuffer.clear();
-//                ba.append(dataArray);
-//                cnBuffer.append(c1);
-//                cnBuffer.append(c2);
-
-//            }else if(c2&0x80){
-//                QByteArray dataArray=buffer.mid(0,i+1);
-//                ba.append(cnBuffer);
-//                cnBuffer.clear();
-//                ba.append(dataArray);
-//                cnBuffer.append(c1);
-//                cnBuffer.append(c2);
-//            }else{
-//                ba.append(cnBuffer);
-//                cnBuffer.clear();
-//                ba.append(buffer);
-//            }
-//        }else{
-//            ba.append(cnBuffer);
-//            cnBuffer.clear();
-//            ba.append(buffer);
-//        }
-//        QString d(ba);
-//        ba.clear();
-//        obj["data"]=d;
         obj["data"]=data;
         doc.setObject(obj);
         data=doc.toJson(QJsonDocument::Compact);

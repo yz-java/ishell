@@ -14,6 +14,7 @@ ConnectEditUI::ConnectEditUI(QWidget *parent,QString title) :
     setFixedSize(this->width(),this->height());
     ui->save->setIcon(QIcon(":/icons/save.png"));
     ui->cancel->setIcon(QIcon(":/icons/cancel.png"));
+    ui->tabWidget->setCurrentIndex(0);
     refreshPage();
 }
 
@@ -35,6 +36,10 @@ void ConnectEditUI::refreshPage(){
     ui->vncUserName->setText(info.vncUserName);
     ui->vncPassword->setText(info.vncPassword);
     ui->vncPort->setText(QString::number(info.vncPort));
+
+    ui->rdpUserName->setText(info.rdpUserName);
+    ui->rdpPassword->setText(info.rdpPassword);
+    ui->rdpPort->setText(QString::number(info.rdpPort));
 }
 
 ConnectEditUI::~ConnectEditUI()
@@ -85,9 +90,14 @@ void ConnectEditUI::on_save_clicked()
     info.publicKeyPath=ui->publickKeyFilePath->text();
     info.privateKeyPath=ui->privateKeyFilePath->text();
     info.passPhrase=ui->passPhrase->text();
+
     info.vncUserName=ui->vncUserName->text();
     info.vncPassword=ui->vncPassword->text();
     info.vncPort=ui->vncPort->text().toUInt();
+
+    info.rdpUserName=ui->rdpUserName->text();
+    info.rdpPassword=ui->rdpPassword->text();
+    info.rdpPort=ui->rdpPort->text().toUInt();
     if(info.parentId==0){
         info.parentId=info.id;
         bool result=ConnectDao::GetInstance()->addConnectInfo(&info);

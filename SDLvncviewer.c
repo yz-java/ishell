@@ -589,31 +589,6 @@ static void got_selection(rfbClient *cl, const char *text, int len)
         printf("could not set received clipboard text: %s\n", SDL_GetError());
 }
 
-static rfbCredential *get_credential(rfbClient *cl, int credentialType)
-{
-    rfbCredential *c = malloc(sizeof(rfbCredential));
-//    c->userCredential.username = malloc(RFB_BUF_SIZE);
-//    c->userCredential.password = malloc(RFB_BUF_SIZE);
-//    if (credentialType != rfbCredentialTypeUser)
-//    {
-//        printf("something else than username and password required for authentication\n");
-//        return NULL;
-//    }
-
-//    printf("username and password required for authentication!\n");
-//    printf("user: ");
-//    fgets(c->userCredential.username, RFB_BUF_SIZE, stdin);
-//    printf("pass: ");
-//    fgets(c->userCredential.password, RFB_BUF_SIZE, stdin);
-
-//    /* remove trailing newlines */
-//    c->userCredential.username[strcspn(c->userCredential.username, "\n")] = 0;
-//    c->userCredential.password[strcspn(c->userCredential.password, "\n")] = 0;
-    c->userCredential.username = vn;
-    c->userCredential.password = vp;
-    return c;
-}
-
 static char *ReadPassword(rfbClient *client)
 {
     int size = strlen(vp);
@@ -644,7 +619,6 @@ void openVNCViewer(const char *host, const char *vncName, const char *vncPasswor
     cl->HandleTextChat = text_chat;
     cl->GotXCutText = got_selection;
 
-//    cl->GetCredential = get_credential;
     cl->GetPassword = ReadPassword;
     cl->listenPort = port;
     cl->listen6Port = port;

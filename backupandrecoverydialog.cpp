@@ -29,6 +29,9 @@ QString toJsonStr(QList<ConnectInfo> list){
         obj.insert("vncUserName",info.vncUserName);
         obj.insert("vncPassword",info.vncPassword);
         obj.insert("vncPort",info.vncPort);
+        obj.insert("rdpUserName",info.rdpUserName);
+        obj.insert("rdpPassword",info.rdpPassword);
+        obj.insert("rdpPort",info.rdpPort);
         array.append(obj);
     }
     QJsonDocument document;

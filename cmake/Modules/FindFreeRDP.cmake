@@ -1,0 +1,66 @@
+SET(FreeRDP_SEARCH_PATHS
+	~/Library/Frameworks
+	/Library/Frameworks
+	/usr/local
+	/usr
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
+	${FreeRDP_PATH}
+)
+
+FIND_PATH(FreeRDP_INCLUDE_DIR freerdp/freerdp.h
+	HINTS
+	$ENV{SDL2DIR}
+	PATH_SUFFIXES include include/freerdp3
+	PATHS ${FreeRDP_SEARCH_PATHS}
+)
+
+if(FreeRDP_INCLUDE_DIR)
+	get_filename_component(FreeRDP_INCLUDE_DIR ${FreeRDP_INCLUDE_DIR} DIRECTORY)
+endif()
+message(STATUS "FreeRDP_INCLUDE_DIR ${FreeRDP_INCLUDE_DIR}")
+FIND_PATH(WINPR_INCLUDE_DIR winpr/crt.h
+	HINTS
+	$ENV{SDL2DIR}
+	PATH_SUFFIXES include include/winpr3
+	PATHS ${FreeRDP_SEARCH_PATHS}
+)
+message(STATUS "WINPR_INCLUDE_DIR ${WINPR_INCLUDE_DIR}")
+
+FIND_LIBRARY(FreeRDP_LIBRARY
+ NAMES freerdp3
+ PATH_SUFFIXES lib
+ PATHS ${FreeRDP_SEARCH_PATHS}  
+ REQUIRED
+)
+if(FreeRDP_LIBRARY)
+	get_filename_component(FreeRDP_LIBRARY_DIR ${FreeRDP_LIBRARY} DIRECTORY)
+endif()
+message(STATUS "FreeRDP_LIBRARY_DIR ${FreeRDP_LIBRARY_DIR}")
+FIND_LIBRARY(FreeRDP_Client_LIBRARY
+ NAMES freerdp-client3
+ PATH_SUFFIXES lib
+ PATHS ${FreeRDP_SEARCH_PATHS}  
+ REQUIRED
+)
+if(FreeRDP_LIBRARY)
+	get_filename_component(FreeRDP_Client_LIBRARY_DIR ${FreeRDP_Client_LIBRARY} DIRECTORY)
+endif()
+message(STATUS "FreeRDP_Client_LIBRARY_DIR ${FreeRDP_Client_LIBRARY_DIR}")
+
+FIND_LIBRARY(WINPR_LIBRARY
+ NAMES winpr3
+ PATH_SUFFIXES lib
+ PATHS ${FreeRDP_SEARCH_PATHS}  
+ REQUIRED
+)
+if(WINPR_LIBRARY)
+	get_filename_component(WINPR_LIBRARY_DIR ${WINPR_LIBRARY} DIRECTORY)
+endif()
+message(STATUS "WINPR_LIBRARY_DIR ${WINPR_LIBRARY_DIR}")
+
+INCLUDE(FindPackageHandleStandardArgs)
+
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(FreeRDP REQUIRED_VARS FreeRDP_INCLUDE_DIR WINPR_INCLUDE_DIR FreeRDP_LIBRARY_DIR FreeRDP_Client_LIBRARY_DIR)

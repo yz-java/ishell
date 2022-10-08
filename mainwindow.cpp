@@ -8,8 +8,10 @@
 #include <QDir>
 #include <QLabel>
 #include "welcomewidget.h"
+#include <QHostInfo>
 extern "C"{
 #include "SDLvncviewer.h"
+#include "xfreerdp/xfreerdp.h"
 }
 MainWindow* mainwindow=NULL;
 
@@ -73,6 +75,7 @@ void MainWindow::initUI(){
     STATUS_BAR_HIGHT=ui->statusbar->height();
     connect(connectManagerUI,SIGNAL(openSSHConnect(ConnectInfo)),this,SLOT(openSSHConnect(ConnectInfo)));
     connect(connectManagerUI,SIGNAL(openVNCConnect(ConnectInfo)),this,SLOT(openVNCConnect(ConnectInfo)));
+    connect(connectManagerUI,SIGNAL(openRDPConnect(ConnectInfo)),this,SLOT(openRDPConnect(ConnectInfo)));
     connect(this,&MainWindow::alertErrorMessageBox,this,[=](QString msg){
         QMessageBox::warning(this,"错误提示",msg);
     });
@@ -146,15 +149,45 @@ static void vncErrorCallback(char*msg)
 
 void MainWindow::openVNCConnect(ConnectInfo connectInfo)
 {
+    if(connectInfo.hostName.isEmpty()||connectInfo.vncUserName.isEmpty()||connectInfo.vncPassword.isEmpty()||connectInfo.vncPort==0){
+        vncErrorCallback("VNC认证配置错误");
+        return;
+    }
     std::thread t([=](){
-        string hostName=connectInfo.hostName.toStdString();
-        const char* host = hostName.data();
+        QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
+        QString hostName = info.addresses().first().toString();
+        string host_name=hostName.toStdString();
+        char* host = (char*)host_name.data();
         string userName = connectInfo.vncUserName.toStdString();
         const char* un = userName.data();
         string password = connectInfo.vncPassword.toStdString();
         const char* pwd = password.data();
         int port = connectInfo.vncPort;
         openVNCViewer(host,un,pwd,port,vncErrorCallback);
+    });
+    t.detach();
+}
+
+void MainWindow::openRDPConnect(ConnectInfo connectInfo)
+{
+    if(connectInfo.hostName.isEmpty()||connectInfo.rdpUserName.isEmpty()||connectInfo.rdpPassword.isEmpty()||connectInfo.rdpPort==0){
+        vncErrorCallback("RDP认证配置错误");
+        return;
+    }
+    std::thread t([=](){
+        QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
+        QString hostName = info.addresses().first().toString();
+        string host_name=hostName.toStdString();
+        char* host = (char*)host_name.data();
+        string userName = connectInfo.rdpUserName.toStdString();
+        char* un = (char*)userName.data();
+        string password = connectInfo.rdpPassword.toStdString();
+        char* pwd = (char*)password.data();
+        int port = connectInfo.rdpPort;
+#ifdef UNIX
+        openRDPViewer(host,un,pwd,port,vncErrorCallback);
+#endif
+
     });
     t.detach();
 }
