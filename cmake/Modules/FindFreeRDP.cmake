@@ -12,18 +12,15 @@ SET(FreeRDP_SEARCH_PATHS
 
 FIND_PATH(FreeRDP_INCLUDE_DIR freerdp/freerdp.h
 	HINTS
-	$ENV{SDL2DIR}
+	$ENV{FreeRDPDIR}
 	PATH_SUFFIXES include include/freerdp3
 	PATHS ${FreeRDP_SEARCH_PATHS}
 )
-
-if(FreeRDP_INCLUDE_DIR)
-	get_filename_component(FreeRDP_INCLUDE_DIR ${FreeRDP_INCLUDE_DIR} DIRECTORY)
-endif()
 message(STATUS "FreeRDP_INCLUDE_DIR ${FreeRDP_INCLUDE_DIR}")
+
 FIND_PATH(WINPR_INCLUDE_DIR winpr/crt.h
 	HINTS
-	$ENV{SDL2DIR}
+	$ENV{FreeRDPDIR}
 	PATH_SUFFIXES include include/winpr3
 	PATHS ${FreeRDP_SEARCH_PATHS}
 )

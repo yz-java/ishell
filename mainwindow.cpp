@@ -150,7 +150,7 @@ static void vncErrorCallback(char*msg)
 void MainWindow::openVNCConnect(ConnectInfo connectInfo)
 {
     if(connectInfo.hostName.isEmpty()||connectInfo.vncUserName.isEmpty()||connectInfo.vncPassword.isEmpty()||connectInfo.vncPort==0){
-        vncErrorCallback("VNC认证配置错误");
+        QMessageBox::warning(this,"错误","VNC认证配置错误");
         return;
     }
     std::thread t([=](){
@@ -171,7 +171,7 @@ void MainWindow::openVNCConnect(ConnectInfo connectInfo)
 void MainWindow::openRDPConnect(ConnectInfo connectInfo)
 {
     if(connectInfo.hostName.isEmpty()||connectInfo.rdpUserName.isEmpty()||connectInfo.rdpPassword.isEmpty()||connectInfo.rdpPort==0){
-        vncErrorCallback("RDP认证配置错误");
+        QMessageBox::warning(this,"错误","RDP认证配置错误");
         return;
     }
     std::thread t([=](){
