@@ -9,6 +9,8 @@
 #include <QLabel>
 #include "welcomewidget.h"
 #include <QHostInfo>
+#include <QKeyEvent>
+#include <QProcess>
 extern "C"{
 #include "SDLvncviewer.h"
 #include "xfreerdp/xfreerdp.h"
@@ -95,6 +97,31 @@ void MainWindow::resizeEvent(QResizeEvent *)
 {
     this->ui->tabWidget->resize(this->size());
     connectInfo->setMinimumWidth(this->width());
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *e)
+{
+    if (e->modifiers() == (Qt::ShiftModifier | Qt::ControlModifier) && e->key() == Qt::Key_A)
+    {
+        //pressed
+        qDebug() << "123";
+        QString program = "/bin/sh";
+        QStringList arguments;
+        arguments << "-c" << "cd ~;ls -l";
+        QProcess* myProcess= new QProcess(this);
+        myProcess->start(program,arguments);
+        connect(myProcess, &QProcess::readyReadStandardOutput, this, [=]()
+        {
+            QString text = myProcess->readAllStandardOutput();
+            qDebug() << text;
+        });
+
+        connect(myProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [ = ](int exitCode, QProcess::ExitStatus exitStatus)
+        {
+            qDebug() << "process finish." << exitCode << exitStatus;
+        });
+//        myProcess->waitForFinished();
+    }
 }
 
 MainWindow::~MainWindow()

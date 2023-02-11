@@ -5,6 +5,7 @@
 #include <QTreeWidgetItem>
 #include "sftpclient.h"
 #include <QProgressBar>
+#include "components/folderitemwidget.h"
 namespace Ui {
 class SftpDialog;
 }
@@ -28,21 +29,16 @@ private:
     Ui::SftpDialog *ui;
     QTreeWidget* treeView;
     QTreeWidgetItem* rootItem;
-    QTreeWidgetItem* currentItem;
-    void initUI();
-    QString rootDir="/";
-    QProgressBar* progressBarMaster;
-    QProgressBar* progressBarChild;
+    FolderItemWidget* folderItemWidget;
 
+    bool refresh = false;
+
+    void initUI();
+
+    QString rootDir="/";
 
     void treeWidgetItemRefresh(QTreeWidgetItem* item);
 
-    void fileUpload(QTreeWidgetItem* item);
-
-    void fileDownload(QString remotePath);
-
-private slots:
-    void popMenu(const QPoint& p);
 };
 
 #endif // SFTPDIALOG_H

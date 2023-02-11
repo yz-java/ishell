@@ -20,6 +20,8 @@
 
 ## GUI
 
+  ![FILE MANAGER GUI](https://raw.githubusercontent.com/yz-java/ishell/dev/gui-filemanager.png)
+
   ![mac GUI](https://raw.githubusercontent.com/yz-java/ishell/dev/gui-mac.png)
 
   ![ubuntu GUI](https://raw.githubusercontent.com/yz-java/ishell/dev/gui-ubuntu.png)

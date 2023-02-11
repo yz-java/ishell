@@ -94,7 +94,11 @@ signals:
     void successMsg(QString msg);
     void connectSuccess();
     void authSuccess();
+
     void opendirCallBack(QString data);
+
+    void opendirInfoCallBack(QString dirPath,QString data);
+
     void initSftpSessionSuccess();
 
     void fileUploadProcess(int fileSize,int currentSize,float process);
@@ -102,6 +106,8 @@ signals:
 
     void fileDownloadProcess(int fileSize,int currentSize,float process);
     void fileDownloadSuccess();
+
+    void opendirEvent(QString dirPath);
 
 };
 

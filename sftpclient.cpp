@@ -102,6 +102,8 @@ bool SFTPClient::initSftpSession()
 
 void SFTPClient::opendir(QString sftpPath)
 {
+    emit opendirEvent(sftpPath);
+
     sftp_handle = libssh2_sftp_opendir(sftp_session, sftpPath.toStdString().data());
 
     if (!sftp_handle)
@@ -124,6 +126,7 @@ void SFTPClient::opendir(QString sftpPath)
             if (longentry[0] != '\0')
             {
                 emit opendirCallBack(l);
+                emit opendirInfoCallBack(sftpPath,l);
             }
         }
         else
@@ -262,7 +265,8 @@ void SFTPClient::fileUpload(QString filePath, QString remotePath)
 
         f.close();
         libssh2_sftp_close(sftp_handle);
-        emit fileUploadSuccess(); });
+        emit fileUploadSuccess();
+    });
 }
 
 void SFTPClient::scpUpload(QString filePath, QString remotePath)
@@ -276,8 +280,7 @@ void SFTPClient::scpUpload(QString filePath, QString remotePath)
         return;
     }
 
-    QtConcurrent::run([=]()
-                      {
+    QtConcurrent::run([=](){
         QFile f(filePath);
         if (!f.open(QIODevice::ReadOnly))
         {
@@ -309,7 +312,8 @@ void SFTPClient::scpUpload(QString filePath, QString remotePath)
         libssh2_channel_send_eof(channel);
         libssh2_channel_wait_eof(channel);
         free_channel();
-        emit fileUploadSuccess(); });
+        emit fileUploadSuccess();
+    });
 }
 
 void SFTPClient::fileDownload(QString remotePath, QString localPath)

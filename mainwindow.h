@@ -26,6 +26,8 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *);
+    //组合按键处理
+    void keyPressEvent(QKeyEvent *e);
 
 signals:
     void alertErrorMessageBox(QString msg);
@@ -50,6 +52,7 @@ private:
     void initUI();
     void initWebSocketServer();
     QLabel* connectInfo;
+
 };
 #endif // MAINWINDOW_H
 
