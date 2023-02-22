@@ -83,16 +83,6 @@ void MainWindow::initUI(){
     });
 }
 
-void MainWindow::initWebSocketServer(){
-    webSocketServer=new WebSocketServer;
-    connect(webSocketServer,&WebSocketServer::errorMsg,this,[=](const QString& msg){
-        QMessageBox::warning(this,"警告",msg);
-        QApplication::quit();
-    });
-    webSocketServer->run();
-
-}
-
 void MainWindow::resizeEvent(QResizeEvent *)
 {
     this->ui->tabWidget->resize(this->size());

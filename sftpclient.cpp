@@ -207,10 +207,13 @@ void SFTPClient::execShell(QString shell)
                        { free_channel(); });
 }
 
-bool SFTPClient::rmByShell(QString path)
+bool SFTPClient::removeFile(QString path)
 {
-    QString shell = "rm -rf " + path + "\r";
-    execShell(shell);
+    string filePath = path.toStdString();
+    rc = libssh2_sftp_unlink_ex(sftp_session, filePath.data(),filePath.length());
+    if (rc != 0) {
+        return false;
+    }
     return true;
 }
 

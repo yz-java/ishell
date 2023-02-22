@@ -232,7 +232,7 @@ void FolderItemWidget::popMenu(const QPoint &p)
             return;
         }
         qDebug() << "删除 ==> " << path;
-        bool status=sftpClient->rmByShell(path);
+        bool status=sftpClient->removeFile(path);
         if(status){
             delete curItem;
         }

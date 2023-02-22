@@ -5,7 +5,6 @@
 #include <QDir>
 #include "common.h"
 #include <QTextCodec>
-#include "websocketserver.h"
 
 
 WebConsole::WebConsole(QWidget *parent,ConnectInfo* connectInfo) :
@@ -31,7 +30,6 @@ WebConsole::WebConsole(QWidget *parent,ConnectInfo* connectInfo) :
 
     QString htmlData = file.readAll().constData();
     webView->setHtml(htmlData);
-//    webView->load(QUrl("http://localhost:8080"));
     webView->show();
     connect(webView,SIGNAL(loadFinished(bool)) ,this,SLOT(pageLoadFinished(bool)));
 }
@@ -88,7 +86,6 @@ void WebConsole::ssh2connect(const QString& jsMsg){
         doc.setObject(obj);
         data=doc.toJson(QJsonDocument::Compact);
         webView->page()->runJavaScript("xtermWrite("+data+")");
-//        WebSocketServer::instance->sendMsg(clientId,data);
     });
 }
 
@@ -110,11 +107,6 @@ void WebConsole::setChannelRequestPtySize(const QString& size){
 void WebConsole::closeEvent(QCloseEvent *event){
     qDebug() << "close window";
     sshClient->stop();
-
-    QTimer::singleShot(1000,this,[&](){
-        WebSocketServer::deleteClient(clientId);
-        delete this;
-    });
 }
 
 void WebConsole::paintEvent(QPaintEvent *event)

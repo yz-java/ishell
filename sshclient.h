@@ -69,6 +69,8 @@ private:
 
     int port = 22;
 
+    QString hostName;
+
     QString username;
 
     QString password;

@@ -1,11 +1,43 @@
 ﻿#include "sshclient.h"
 #include <QTimer>
 #include <QHostInfo>
+
+static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
+{
+    struct timeval timeout;
+    int rc;
+    fd_set fd;
+    fd_set *writefd = NULL;
+    fd_set *readfd = NULL;
+    int dir;
+
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+
+    FD_ZERO(&fd);
+
+    FD_SET(socket_fd, &fd);
+
+    /* now make sure we wait in the correct direction */
+    dir = libssh2_session_block_directions(session);
+
+    if(dir & LIBSSH2_SESSION_BLOCK_INBOUND)
+        readfd = &fd;
+
+    if(dir & LIBSSH2_SESSION_BLOCK_OUTBOUND)
+        writefd = &fd;
+
+    rc = select(socket_fd + 1, readfd, writefd, NULL, &timeout);
+
+    return rc;
+}
+
 SSHClient::SSHClient(QObject *parent)
 {
 
 }
 SSHClient::SSHClient(QString hostName,QString port,QString username,const QString password){
+    this->hostName=hostName;
     QHostInfo info = QHostInfo::fromName(hostName);
     hostName = info.addresses().first().toString();
     this->hostaddr = inet_addr(hostName.toStdString().data());
@@ -18,6 +50,7 @@ SSHClient::SSHClient(QString hostName,QString port,QString username,const QStrin
 }
 
 SSHClient::SSHClient(QString hostName,QString port,QString username,QString publicKeyPath,QString privateKeyPath,QString passPhrase){
+    this->hostName=hostName;
     QHostInfo info = QHostInfo::fromName(hostName);
     hostName = info.addresses().first().toString();
     this->hostaddr = inet_addr(hostName.toStdString().data());
@@ -50,41 +83,45 @@ bool SSHClient::connect(){
 
 bool SSHClient::openSession(){
     qDebug() << "打开会话";
+    LIBSSH2_KNOWNHOSTS *nh;
     /* Open a session */
     session = libssh2_session_init();
-    if (libssh2_session_startup (session, sock) != 0) {
-        fprintf(stderr, "Failed Start the SSH session\n");
-        emit errorMsg("Failed Start the SSH session");
+    libssh2_session_set_blocking(session, 0);
+    int rc = 0;
+    while((rc = libssh2_session_handshake(session, sock)) ==LIBSSH2_ERROR_EAGAIN);
+    if(rc) {
+        emit errorMsg("Failed to establishing SSH session");
         return false;
     }
-    qDebug() << "打开会话成功";
-    libssh2_session_set_timeout(session,0);
+    nh = libssh2_knownhost_init(session);
+    if(!nh) {
+        return false;
+    }
+    libssh2_knownhost_free(nh);
     return true;
 }
 
 bool SSHClient::userauth(){
     qDebug() << "开始认证";
     std::string un=username.toStdString();
+    int rc = 0;
+    QString errMsg;
     if(authType==1){
         std::string p=password.toStdString();
-        if (libssh2_userauth_password(session, un.data(), p.data()) != 0) {
-               fprintf(stderr, "Failed to authenticate\n");
-               emit errorMsg("Failed to authenticate");
-               close_connect();
-               return false;
-         }
+        while ((rc=libssh2_userauth_password(session, un.data(), p.data()))==LIBSSH2_ERROR_EAGAIN);
+        errMsg="Authentication by password failed";
     }
 
     if(authType==2){
         std::string pkf=publicKeyPath.toStdString();
         std::string pvkf=privateKeyPath.toStdString();
         std::string pp=passPhrase.toStdString();
-        if (libssh2_userauth_publickey_fromfile(session, un.data(),pkf.data(),pvkf.data(),pp.data()) != 0) {
-               fprintf(stderr, "Failed to authenticate\n");
-               emit errorMsg("Failed to authenticate");
-               close_connect();
-               return false;
-         }
+        while ((rc=libssh2_userauth_publickey_fromfile(session, un.data(),pkf.data(),pvkf.data(),pp.data()))==LIBSSH2_ERROR_EAGAIN);
+        errMsg="Authentication by public key failed";
+    }
+    if(rc) {
+        emit errorMsg(errMsg);
+        return false;
     }
     emit authSuccess();
     qDebug() << "认证成功";
@@ -92,29 +129,35 @@ bool SSHClient::userauth(){
 }
 
 bool SSHClient::open_channel(){
+    int rc = 0;
     /* Open a channel */
     channel = libssh2_channel_open_session(session);
+    while((channel = libssh2_channel_open_session(session)) == NULL &&
+              libssh2_session_last_error(session, NULL, NULL, 0) ==
+              LIBSSH2_ERROR_EAGAIN) {
+            waitsocket(sock, session);
+    }
 
     if ( channel == NULL ) {
-        fprintf(stderr, "Failed to open a new channel\n");
         emit errorMsg("Failed to open a new channel");
         stop();
         return false;
     }
 
-    if (libssh2_channel_request_pty( channel, "xterm") != 0) {
-       fprintf(stderr, "Failed to request a pty\n");
+    while ((rc=libssh2_channel_request_pty( channel, "xterm"))==LIBSSH2_ERROR_EAGAIN);
+    if (rc != 0) {
        emit errorMsg("Failed to request a pty");
        stop();
        return false;
     }
     if(pty_rows!=0&&pty_cols!=0){
-        libssh2_channel_request_pty_size(channel, pty_cols, pty_rows);
+        while ((rc=libssh2_channel_request_pty_size(channel, pty_cols, pty_rows))==LIBSSH2_ERROR_EAGAIN);
+
     }
 
     /* Request a shell */
-    if (libssh2_channel_shell(channel) != 0) {
-       fprintf(stderr, "Failed to open a shell\n");
+    while ((rc=libssh2_channel_shell(channel))==LIBSSH2_ERROR_EAGAIN);
+    if (rc != 0) {
        emit errorMsg("Failed to open a shell");
        stop();
        return false;
@@ -127,6 +170,7 @@ bool SSHClient::open_channel(){
 void SSHClient::setChannelRequestPtySize(int row,int column){
     libssh2_channel_request_pty_size(channel, column, row);
 }
+
 void SSHClient::free_channel(){
     if(channel!=NULL){
         libssh2_channel_free(channel);
@@ -136,10 +180,10 @@ void SSHClient::free_channel(){
 
 void SSHClient::close_session(){
     if(session!=NULL){
-        libssh2_session_disconnect(session, "Session Shutdown, Thank you for playing");
+        libssh2_session_disconnect(session, "Normal Shutdown, Thank you for playing");
         libssh2_session_free(session);
     }
-
+    session=NULL;
 }
 
 void SSHClient::close_connect(){
@@ -153,7 +197,6 @@ void SSHClient::close_connect(){
 void SSHClient::exec(std::string shell){
     int size=strlen(shell.c_str());
     libssh2_channel_write(channel, shell.c_str(), size);
-//    libssh2_channel_write(channel,shell.c_str(),1);
 }
 
 void SSHClient::run(){
@@ -179,40 +222,32 @@ void SSHClient::run(){
     fds[0].type = LIBSSH2_POLLFD_CHANNEL;
     fds[0].fd.channel = channel;
     fds[0].events =  LIBSSH2_POLLFD_POLLIN | LIBSSH2_POLLFD_POLLOUT;
-
-    int nfds = 1;
     char* buf = new char[READ_BUF_SIZE];
+    int ret = 0;
     while (true) {
-        if (libssh2_channel_eof(channel) == 1){
-            free (fds);
+        if ((ret=libssh2_channel_eof(channel)) == 1){
             emit readChannelData("断开连接");
+            this->stop();
             break;
         }
-
-        if (libssh2_poll(fds, nfds, 10) >0) {
-            ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
-//            qDebug() << "实际读取长度：" << length;
-            if(length<=0){
-                continue;
-            }
+        ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
+        if(length>0){
             QByteArray buffer(buf,length);
             QString data = QString::fromUtf8(buffer);
             emit readChannelData(data);
-//            fprintf(stdout, "%c", buf);
-//            fflush(stdout);
+        }else if(length == LIBSSH2_ERROR_EAGAIN){
+            msleep(10);
+        }else{
+            break;
         }
     }
+    delete [] buf;
 }
 
 void SSHClient::stop(){
-    QTimer::singleShot(100,this,[&](){
-        free_channel();
-        close_session();
-        this->terminate();
-
-    });
+    free_channel();
+    close_session();
     close_connect();
     libssh2_exit();
-
-
+    free(fds);
 }

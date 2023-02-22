@@ -55,7 +55,7 @@ public:
 
     bool rmdir(QString path);
 
-    bool rmByShell(QString path);
+    bool removeFile(QString path);
 
     bool rename(QString sourceName,QString targetName);
 
