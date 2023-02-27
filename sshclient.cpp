@@ -1,7 +1,7 @@
 ﻿#include "sshclient.h"
 #include <QTimer>
 #include <QHostInfo>
-
+#include <netinet/tcp.h>
 static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
 {
     struct timeval timeout;
@@ -68,6 +68,16 @@ SSHClient::SSHClient(QString hostName,QString port,QString username,QString publ
 bool SSHClient::connect(){
     qDebug() << "开始连接";
     sock = socket (AF_INET, SOCK_STREAM, 0);
+#ifdef UNIX
+    int keepalive = 1;
+    int keepidle = 10; // 如该连接在10秒内没有任何数据往来,则进行探测
+    int keepcount = 3; //探测尝试的次数.如果第1次探测包就收到响应了,则后2次的不再发.
+    int keepintvl = 10; //每次间隔时间
+    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
+    setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle));
+    setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount));
+    setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &keepintvl, sizeof(keepintvl));
+#endif
     sin.sin_family = AF_INET;
     sin.sin_port = port;
     sin.sin_addr.s_addr = hostaddr;
@@ -119,6 +129,7 @@ bool SSHClient::userauth(){
         while ((rc=libssh2_userauth_publickey_fromfile(session, un.data(),pkf.data(),pvkf.data(),pp.data()))==LIBSSH2_ERROR_EAGAIN);
         errMsg="Authentication by public key failed";
     }
+
     if(rc) {
         emit errorMsg(errMsg);
         return false;
@@ -187,11 +198,14 @@ void SSHClient::close_session(){
 }
 
 void SSHClient::close_connect(){
+    if(sock){
 #ifdef WIN32
     closesocket(sock);
 #else
     close(sock);
 #endif
+    }
+
 }
 
 void SSHClient::exec(std::string shell){
@@ -226,7 +240,7 @@ void SSHClient::run(){
     int ret = 0;
     while (true) {
         if ((ret=libssh2_channel_eof(channel)) == 1){
-            emit readChannelData("断开连接");
+            emit readChannelData("\n目标主动断开连接");
             this->stop();
             break;
         }
@@ -235,9 +249,12 @@ void SSHClient::run(){
             QByteArray buffer(buf,length);
             QString data = QString::fromUtf8(buffer);
             emit readChannelData(data);
+
         }else if(length == LIBSSH2_ERROR_EAGAIN){
             msleep(10);
         }else{
+            emit readChannelData("\nSSH会话连接异常");
+            this->stop();
             break;
         }
     }
@@ -249,5 +266,8 @@ void SSHClient::stop(){
     close_session();
     close_connect();
     libssh2_exit();
-    free(fds);
+    if(fds){
+        free(fds);
+        fds=NULL;
+    }
 }
