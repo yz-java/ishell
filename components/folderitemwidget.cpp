@@ -72,6 +72,20 @@ FolderItemWidget::FolderItemWidget(QWidget *parent,SFTPClient* sftpClient) : QWi
     vDirlayout->setMargin(0);
 
     QHBoxLayout* titlelayout=new QHBoxLayout(this);
+
+    QPushButton* returnButton = new QPushButton("返回上一级");
+    connect(returnButton,&QPushButton::clicked,this,[=](){
+        QString currentDirStr = this->currentDirEdit->text().isEmpty()?"/":this->currentDirEdit->text();
+        QDir currentDir(currentDirStr);
+        currentDir.cdUp();
+        currentDirStr = currentDir.path();
+        this->setCurrentDirEdit(currentDirStr);
+        treeView->clear();
+        sftpClient->opendir(currentDirPath);
+    });
+    returnButton->setFixedHeight(30);
+    titlelayout->addWidget(returnButton);
+
     currentDirEdit = new QLineEdit;
     currentDirEdit->setFixedHeight(30);
     titlelayout->addWidget(currentDirEdit);
@@ -84,6 +98,8 @@ FolderItemWidget::FolderItemWidget(QWidget *parent,SFTPClient* sftpClient) : QWi
         sftpClient->opendir(currentDirPath);
     });
     gotoButton->setFixedHeight(30);
+    gotoButton->setShortcut(Qt::Key_Escape);
+    gotoButton->setDefault(true);
     titlelayout->addWidget(gotoButton);
     QPushButton* refreshButton = new QPushButton("刷新");
     connect(refreshButton,&QPushButton::clicked,this,[=](){
