@@ -1,210 +1,171 @@
 ﻿#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include <QScreen>
-#include <QFile>
-#include <QPushButton>
-#include "webconsole.h"
-#include "db/dbutil.h"
+
 #include <QDir>
-#include <QLabel>
-#include "welcomewidget.h"
+#include <QFile>
 #include <QHostInfo>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QProcess>
-extern "C"{
+#include <QPushButton>
+#include <QScreen>
+
+#include "db/dbutil.h"
+#include "sftpdialog.h"
+#include "ui_mainwindow.h"
+#include "vncwebviewwdiget.h"
+#include "webconsole.h"
+#include "websocketserver.h"
+extern "C" {
 #include "SDLvncviewer.h"
-#include "xfreerdp/xfreerdp.h"
+#ifdef XFREE_RDP
+//#include "xfreerdp/xfreerdp.h"
+#include "xfree-rdp/xfreerdp.h"
+#endif
 }
-MainWindow* mainwindow=NULL;
+
+MainWindow *mainwindow = NULL;
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-{
-    ui->setupUi(this);
-    setWindowTitle("ishell");
-    setWindowIcon(QIcon(":/logo.png"));
-    QList<QScreen *> list_screen =  QGuiApplication::screens();  //多显示器
-    QRect rect = list_screen.at(0)->geometry();
-    setMinimumSize(800, 600);
+    : QMainWindow(parent), ui(new Ui::MainWindow) {
+  ui->setupUi(this);
+  setWindowTitle("ishell");
+  setWindowIcon(QIcon(":/logo.png"));
+  qDebug() << "main ThreadId is" << QThread::currentThreadId();
 
-    QDir dir;
-    dir.mkdir(Common::workspacePath);
+  QThread *t = new QThread;
+  auto wsServer = WebSocketServer::getInstance();
+  wsServer->moveToThread(t);
+  connect(t, &QThread::started, wsServer, &WebSocketServer::start);
+  t->start();
 
-//    int desktop_width = rect.width();
-//    int desktop_height = rect.height();
-//    setMaximumSize(desktop_width-200, desktop_height-200);
-//    rect=QRect(200,200,desktop_width-200,desktop_height-200);
-//    setGeometry(rect);
-//    qDebug() << desktop_width <<desktop_height;
+  setMinimumSize(800, 600);
+  //  setMaximumSize(1280, 720);
+  //  setMinimumSize(1920, 1080);
 
-    DBUtil::GetInstance()->init();
+  QDir dir;
+  dir.mkdir(Common::workspacePath);
 
-    QTimer::singleShot(100,this,[=](){
-        initUI();
-//        initWebSocketServer();
-    });
-    connectInfo=new QLabel;
-    connectInfo->setText("项目开源地址：https://github.com/yz-java/ishell    Email:yangzhaojava@gmail.com");
-    connectInfo->setAlignment(Qt::AlignCenter);
-    connectInfo->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  DBUtil::GetInstance()->init();
 
-    ui->statusbar->addWidget(connectInfo);
+  QTimer::singleShot(100, this, [=]() { initUI(); });
 }
 
-void MainWindow::initUI(){
-    connectManagerUI=new ConnectManagerUI(this);
+void MainWindow::initUI() {
+  connectManagerUI = new ConnectManagerUI(this);
 
-    ui->tabWidget->setTabPosition(QTabWidget::North);
-    ui->tabWidget->insertTab(0,new QWidget(this), QIcon(":/icons/manager.png"),"连接管理");
-    ui->tabWidget->setTabToolTip(0,"连接管理");
-//    webView = new QWebEngineView(this);
-//    QFile file(":/html/README.html");
-//    if (!file.open(QIODevice::ReadOnly))
-//    {
-//        return;
-//    }
-//    QString htmlData = file.readAll().constData();
-//    webView->setHtml(htmlData);
-//    webView->show();
+  ui->tabWidget->setTabPosition(QTabWidget::North);
+  ui->tabWidget->insertTab(0, connectManagerUI, QIcon(":/icons/manager.png"),
+                           "资产管理");
+  ui->tabWidget->setTabToolTip(0, "资产管理");
 
-    ui->tabWidget->setUsesScrollButtons(true);
-    ui->tabWidget->insertTab(1,new welcomewidget(),QIcon(":/icons/welcome.png"),"欢迎页");
-    ui->tabWidget->setTabToolTip(1,"欢迎页");
-    this->ui->tabWidget->setTabsClosable(true);
-    ui->tabWidget->setCurrentIndex(1);
-    mainwindow=this;
-    STATUS_BAR_HIGHT=ui->statusbar->height();
-    connect(connectManagerUI,SIGNAL(openSSHConnect(ConnectInfo)),this,SLOT(openSSHConnect(ConnectInfo)));
-    connect(connectManagerUI,SIGNAL(openVNCConnect(ConnectInfo)),this,SLOT(openVNCConnect(ConnectInfo)));
-    connect(connectManagerUI,SIGNAL(openRDPConnect(ConnectInfo)),this,SLOT(openRDPConnect(ConnectInfo)));
-    connect(this,&MainWindow::alertErrorMessageBox,this,[=](QString msg){
-        QMessageBox::warning(this,"错误提示",msg);
-    });
+  ui->tabWidget->setUsesScrollButtons(true);
+  ui->tabWidget->insertTab(1, new welcomewidget(this),
+                           QIcon(":/icons/welcome.png"), "欢迎页");
+  ui->tabWidget->setTabToolTip(1, "欢迎页");
+  this->ui->tabWidget->setTabsClosable(true);
+  ui->tabWidget->setCurrentIndex(0);
+  mainwindow = this;
+  connect(connectManagerUI, SIGNAL(openSSHConnect(ConnectInfo)), this,
+          SLOT(openSSHConnect(ConnectInfo)));
+  connect(connectManagerUI, SIGNAL(openVNCConnect(ConnectInfo)), this,
+          SLOT(openVNCConnect(ConnectInfo)));
+  connect(connectManagerUI, SIGNAL(openRDPConnect(ConnectInfo)), this,
+          SLOT(openRDPConnect(ConnectInfo)));
+  connect(connectManagerUI, SIGNAL(openSFTPConnect(ConnectInfo)), this,
+          SLOT(openSFTPConnect(ConnectInfo)));
+  connect(this, &MainWindow::alertErrorMessageBox, this,
+          [=](QString msg) { QMessageBox::warning(this, "错误提示", msg); });
 }
 
-void MainWindow::resizeEvent(QResizeEvent *)
-{
-    this->ui->tabWidget->resize(this->size());
-    connectInfo->setMinimumWidth(this->width());
+void MainWindow::resizeEvent(QResizeEvent *) {
+  this->ui->tabWidget->resize(this->size());
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *e)
-{
-    if (e->modifiers() == (Qt::ShiftModifier | Qt::ControlModifier) && e->key() == Qt::Key_A)
-    {
-        //pressed
-        qDebug() << "123";
-        QString program = "/bin/sh";
-        QStringList arguments;
-        arguments << "-c" << "cd ~;ls -l";
-        QProcess* myProcess= new QProcess(this);
-        myProcess->start(program,arguments);
-        connect(myProcess, &QProcess::readyReadStandardOutput, this, [=]()
-        {
-            QString text = myProcess->readAllStandardOutput();
-            qDebug() << text;
-        });
+void MainWindow::keyPressEvent(QKeyEvent *e) {}
 
-        connect(myProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [ = ](int exitCode, QProcess::ExitStatus exitStatus)
-        {
-            qDebug() << "process finish." << exitCode << exitStatus;
-        });
-//        myProcess->waitForFinished();
-    }
+MainWindow::~MainWindow() { delete ui; }
+
+void MainWindow::on_tabWidget_currentChanged(int index) {
+  qDebug() << index;
+  currentIndex = index;
 }
 
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-
-void MainWindow::on_tabWidget_currentChanged(int index)
-{
-
-    qDebug() << index;
-    if(index==0){
-        this->ui->tabWidget->setCurrentIndex(currentIndex);
-        if(!connectManagerUI->isActiveWindow()){
-            connectManagerUI->show();
-        }
-        return;
-    }
-    currentIndex=index;
-
-}
-
-void MainWindow::on_tabWidget_tabCloseRequested(int index)
-{
-    qDebug() << "close ==> " << index;
-    if(index==0){
-        return;
-    }
-    WebConsole* console = (WebConsole*)ui->tabWidget->widget(index);
+void MainWindow::on_tabWidget_tabCloseRequested(int index) {
+  qDebug() << "close ==> " << index;
+  if (index == 0) {
+    return;
+  }
+  QString type = ui->tabWidget->widget(index)->property("type").toString();
+  if (type == "vnc") {
+    VncWebViewWdiget *w = (VncWebViewWdiget *)ui->tabWidget->widget(index);
+    w->close();
+  }
+  if (type == "ssh") {
+    WebConsole *console = (WebConsole *)ui->tabWidget->widget(index);
     console->close();
-    ui->tabWidget->removeTab(index);
+  }
 
-    if(ui->tabWidget->count()==1){
-        ui->tabWidget->insertTab(1,webView,QIcon(":/icons/welcome.png"),"欢迎页");
-        ui->tabWidget->setCurrentIndex(1);
-    }
-
+  ui->tabWidget->removeTab(index);
 }
 
-void MainWindow::openSSHConnect(ConnectInfo connectInfo){
-    int count=ui->tabWidget->count();
-    ui->tabWidget->insertTab(count,new WebConsole(this,&connectInfo),QIcon(":/icons/console.png"),connectInfo.name);
-    ui->tabWidget->setTabToolTip(count,connectInfo.name);
-    ui->tabWidget->setCurrentIndex(count);
+void MainWindow::openSSHConnect(ConnectInfo connectInfo) {
+  int count = ui->tabWidget->count();
+  ui->tabWidget->insertTab(count, new WebConsole(this, &connectInfo),
+                           QIcon(":/icons/console.png"),
+                           connectInfo.name + "-ssh");
+  ui->tabWidget->setTabToolTip(count, connectInfo.hostName);
+  ui->tabWidget->setCurrentIndex(count);
+  ui->tabWidget->widget(count)->setProperty("type", "ssh");
 }
 
-static void vncErrorCallback(char*msg)
-{
-    mainwindow->alertErrorMessageBox(QString::fromUtf8(msg));
+static void vncErrorCallback(char *msg) {
+  mainwindow->alertErrorMessageBox(QString::fromUtf8(msg));
 }
 
-void MainWindow::openVNCConnect(ConnectInfo connectInfo)
-{
-    if(connectInfo.hostName.isEmpty()||connectInfo.vncUserName.isEmpty()||connectInfo.vncPassword.isEmpty()||connectInfo.vncPort==0){
-        QMessageBox::warning(this,"错误","VNC认证配置错误");
-        return;
-    }
-    std::thread t([=](){
-        QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
-        QString hostName = info.addresses().first().toString();
-        string host_name=hostName.toStdString();
-        char* host = (char*)host_name.data();
-        string userName = connectInfo.vncUserName.toStdString();
-        const char* un = userName.data();
-        string password = connectInfo.vncPassword.toStdString();
-        const char* pwd = password.data();
-        int port = connectInfo.vncPort;
-        openVNCViewer(host,un,pwd,port,vncErrorCallback);
-    });
-    t.detach();
+void MainWindow::openVNCConnect(ConnectInfo connectInfo) {
+  if (connectInfo.hostName.isEmpty() || connectInfo.vncPassword.isEmpty() ||
+      connectInfo.vncPort == 0) {
+    QMessageBox::warning(this, "错误", "VNC认证配置错误");
+    return;
+  }
+  int count = ui->tabWidget->count();
+  ui->tabWidget->insertTab(count, new VncWebViewWdiget(this, connectInfo),
+                           QIcon(":/icons/desktop.png"),
+                           connectInfo.name + "-vnc");
+  ui->tabWidget->setTabToolTip(count, connectInfo.hostName);
+  ui->tabWidget->setCurrentIndex(count);
+  ui->tabWidget->widget(count)->setProperty("type", "vnc");
 }
 
-void MainWindow::openRDPConnect(ConnectInfo connectInfo)
-{
-    if(connectInfo.hostName.isEmpty()||connectInfo.rdpUserName.isEmpty()||connectInfo.rdpPassword.isEmpty()||connectInfo.rdpPort==0){
-        QMessageBox::warning(this,"错误","RDP认证配置错误");
-        return;
-    }
-    std::thread t([=](){
-        QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
-        QString hostName = info.addresses().first().toString();
-        string host_name=hostName.toStdString();
-        char* host = (char*)host_name.data();
-        string userName = connectInfo.rdpUserName.toStdString();
-        char* un = (char*)userName.data();
-        string password = connectInfo.rdpPassword.toStdString();
-        char* pwd = (char*)password.data();
-        int port = connectInfo.rdpPort;
-#ifdef UNIX
-        openRDPViewer(host,un,pwd,port,vncErrorCallback);
+void MainWindow::openRDPConnect(ConnectInfo connectInfo) {
+  if (connectInfo.hostName.isEmpty() || connectInfo.rdpUserName.isEmpty() ||
+      connectInfo.rdpPassword.isEmpty() || connectInfo.rdpPort == 0) {
+    QMessageBox::warning(this, "错误", "RDP认证配置错误");
+    return;
+  }
+  std::thread t([=]() {
+    QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
+    QString hostName = info.addresses().first().toString();
+    string host_name = hostName.toStdString();
+    char *host = (char *)host_name.data();
+    string userName = connectInfo.rdpUserName.toStdString();
+    char *un = (char *)userName.data();
+    string password = connectInfo.rdpPassword.toStdString();
+    char *pwd = (char *)password.data();
+    int port = connectInfo.rdpPort;
+#ifdef XFREE_RDP
+    openRDPViewer(host, un, pwd, port, vncErrorCallback);
 #endif
+  });
+  t.detach();
+}
 
-    });
-    t.detach();
+void MainWindow::openSFTPConnect(ConnectInfo connectInfo) {
+  SftpDialog *sftpDialog = new SftpDialog(this, connectInfo);
+  //  sftpDialog->show();
+  int count = ui->tabWidget->count();
+  ui->tabWidget->insertTab(count, sftpDialog, QIcon(":/icons/folder.png"),
+                           connectInfo.name + "-文件管理");
+  ui->tabWidget->setTabToolTip(count, connectInfo.name + "-文件管理");
+  ui->tabWidget->setCurrentIndex(count);
 }

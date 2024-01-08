@@ -5,36 +5,37 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <script src="qrc:/html/jquery.min.js"></script>
   <link href="qrc:/html/xterm.min.css" rel="stylesheet">
-  <link href="qrc:/html/fullscreen.min.css" rel="stylesheet">
   <script src="qrc:/html/xterm.min.js"></script>
+  <link href="qrc:/html/fullscreen.min.css" rel="stylesheet">
   <script src="qrc:/html/fullscreen.min.js"></script>
   <script src="qrc:/html/fit.min.js"></script>
   <script type="text/javascript" src="qrc:/html/qwebchannel.js"></script>
   <style>
-    ::-webkit-scrollbar {
+    /* ::-webkit-scrollbar {
       width: 0px;
-    }
+    } */
   </style>
 </head>
 
 <body style="padding: 0;margin: 0;">
-  <div id="terminal" style="padding: 0;margin: 0;"></div>
+  <div id="terminal" style="padding: 0;margin: 0;min-height: cala(100vh)"></div>
 </body>
 <script type="text/javascript">
-  
-  new QWebChannel(qt.webChannelTransport, function(channel) {
-      window.core = channel.objects.core
+
+  new QWebChannel(qt.webChannelTransport, function (channel) {
+    window.core = channel.objects.core
   })
 
   var clientId
   var body_height = $(document).height() - 20;
-  var body_width = $(document).width();
   $("#terminal").height(body_height);
   Terminal.applyAddon(fullscreen);
   Terminal.applyAddon(fit);
 
+  window.addEventListener('resize', onresize);
+
   var term = new Terminal({
-    rendererType: "dom", //渲染类型
+    // rendererType: "dom", //渲染类型
     termName: "xterm",
     useStyle: true,
     convertEol: true,
@@ -42,13 +43,16 @@
     cursorBlink: true,
     visualBell: true,
     colors: Terminal.xtermColors,
-    // rendererType: "canvas",
-    // theme: {
-    //     foreground: "#7e9192", //字体
-    //     background: "#002833", //背景色
-    //     cursor: "help", //设置光标
-    //     lineHeight: 16
-    //   }
+    fontSize: 20,
+    rendererType: "canvas",
+    // scrollback: 1000,
+    theme: {
+      // foreground: "#7e9192", //字体
+      background: "#202935", //背景色
+      cursorAccent: "#202935",
+      // cursor: "help", //设置光标
+      // lineHeight: 16
+    }
   });
   term.open(document.getElementById('terminal'));
   term.fit();
@@ -58,21 +62,21 @@
     core.recieveJsMessage(data);
   });
 
-  term.on('resize', function () {
+  // getRowsAndCols()
 
+  term.on('resize', function (size) {
+    var ss = size.rows + "," + size.cols
+    if (core != undefined) {
+      core.setChannelRequestPtySize(ss)
+    }
   })
 
-  function lineFeed() {
-    term.write('\r\n ');
-  }
 
-
-  window.onresize = function () {
+  function onresize() {
     var body_height = $(window).height() - 20;
     $("#terminal").height(body_height);
     term.fit()
-    term.scrollToBottom()
-    requestPtySize()
+    // getRowsAndCols()
   }
 
   function getRowsAndCols() {
@@ -103,33 +107,37 @@
     }
   }
 
-  function setClientId(cId){
-    clientId=cId
+  function setClientId(cId) {
+    clientId = cId
     open_websocket()
-    core.ssh2connect("")
+    // core.ssh2connect("")
   }
+  setTimeout(() => {
+    term.fontSize = 26
+  }, 10000)
 
   function open_websocket() {
-      if (location.search != "")
-          var baseUrl = (/[?&]webChannelBaseUrl=([A-Za-z0-9\-:/\.]+)/.exec(location.search)[1]);
-      else
-          var baseUrl = "ws://localhost:12345";
+    if (location.search != "")
+      var baseUrl = (/[?&]webChannelBaseUrl=([A-Za-z0-9\-:/\.]+)/.exec(location.search)[1]);
+    else
+      var baseUrl = "ws://localhost:12345?clientId=" + clientId;
 
-      var socket = new WebSocket(baseUrl);
+    var socket = new WebSocket(baseUrl);
 
-      socket.onclose = function() {
-          console.error("web channel closed");
-      };
-      socket.onerror = function(error) {
-          console.error("web channel error: " + error);
-      };
-      socket.onopen = function() {
-          socket.send(clientId);
-      }
-      socket.onmessage=function(evt){
-        var received_msg = evt.data
-        term.write(received_msg)
-      }
+    socket.onclose = function () {
+      console.error("web channel closed");
+    };
+    socket.onerror = function (error) {
+      console.error("web channel error: " + error);
+    };
+    socket.onopen = function () {
+      socket.send(clientId);
+    }
+    socket.onmessage = function (evt) {
+      var received_msg = evt.data
+      // console.error(received_msg);
+      term.write(received_msg)
+    }
   }
 </script>
 

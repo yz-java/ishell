@@ -13,5 +13,6 @@
         <file>icons/file.png</file>
         <file>icons/backup_recovery.png</file>
         <file>logo.png</file>
+        <file>icons/desktop.png</file>
     </qresource>
 </RCC>

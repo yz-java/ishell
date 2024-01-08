@@ -10,8 +10,13 @@
         <file>html/xterm.html</file>
         <file>html/xterm.min.css</file>
         <file>html/xterm.min.js</file>
-        <file>html/xterm4/js/app.js</file>
-        <file>html/xterm4/js/chunk-vendors.js</file>
-        <file>html/xterm4/index.html</file>
+        <file>html/novnc/favicon.ico</file>
+        <file>html/novnc/index.html</file>
+        <file>html/novnc/js/app.js</file>
+        <file>html/novnc/js/chunk-vendors.js</file>
+        <file>html/xterm5/favicon.ico</file>
+        <file>html/xterm5/index.html</file>
+        <file>html/xterm5/js/app.js</file>
+        <file>html/xterm5/js/chunk-vendors.js</file>
     </qresource>
 </RCC>

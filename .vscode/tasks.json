@@ -9,14 +9,14 @@
         {
             "label": "make",
             "type": "shell",
-            "command": "make -j6",
+            "command": "make -j24",
             "dependsOn":"cmake",
             
         },
         {
             "label": "cmake",
             "type": "shell",
-            "command": "cmake -DCMAKE_BUILD_TYPE=Release ..",
+            "command": "cmake -DCMAKE_BUILD_TYPE=Debug ..",
             "dependsOn":"clear",
         },
         {

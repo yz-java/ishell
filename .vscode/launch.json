@@ -22,7 +22,8 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "make"
+            "preLaunchTask": "make",
+            "visualizerFile": "/home/yangzhao/.config/Code/User/workspaceStorage/a391d812f83f7dcd73b46980ca7c9e22/tonka3000.qtvsctools/qt.natvis.xml"
         }
     ]
 }

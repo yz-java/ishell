@@ -1,23 +1,22 @@
 #ifndef SFTPCLIENT_H
 #define SFTPCLIENT_H
 
-#include <QObject>
-#include <QThread>
-#include <QString>
-#include <string.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h>
-#include <stdlib.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <libssh2.h>
 #include <libssh2_sftp.h>
-#include <QEventLoop>
-#include <QDebug>
-#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 
+#include <QDebug>
+#include <QEventLoop>
+#include <QObject>
+#include <QString>
+#include <QThread>
+#include <iostream>
 
 using namespace std;
 
@@ -26,89 +25,87 @@ using namespace std;
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
 #else
-#include <sys/ioctl.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <libgen.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #endif
 
 #include "connectinfo.h"
-
-class SFTPClient : public QThread
-{
-    Q_OBJECT
+class SFTPClient : public QThread {
+  Q_OBJECT
 public:
-    explicit SFTPClient(ConnectInfo *connectInfo = nullptr);
-    ~SFTPClient();
-    bool connect();
+  explicit SFTPClient(ConnectInfo connectInfo);
+  ~SFTPClient();
+  bool connect();
 
-    bool openSession();
+  bool openSession();
 
-    bool auth();
+  bool auth();
 
-    bool initSftpSession();
+  bool initSftpSession();
 
-    void opendir(QString sftpPath);
+  bool mkdir(QString path);
 
-    bool mkdir(QString path);
+  bool rmdir(QString path);
 
-    bool rmdir(QString path);
+  bool removeFile(QString path);
 
-    bool removeFile(QString path);
+  bool rename(QString sourceName, QString targetName);
 
-    bool rename(QString sourceName,QString targetName);
+  //  void fileDownload(QString remotePath, QString localPath);
 
-    void fileUpload(QString filePath,QString remotePath);
+  void run();
 
-    void scpUpload(QString filePath,QString remotePath);
-
-    void fileDownload(QString remotePath,QString localPath);
-
-    void scpDownload(QString filePath,QString remotePath);
-
-    void execShell(QString shell);
-
-    void run();
-
-    void stop();
-
-    void free_channel();
+  void stop();
 
 private:
-    ConnectInfo connectInfo;
-    QEventLoop loop;
-    int sock = 0;
-    struct sockaddr_in sin;
-    int rc=0;
-    LIBSSH2_SESSION *session=NULL;
-    LIBSSH2_CHANNEL *channel=NULL;
-    LIBSSH2_SFTP *sftp_session=NULL;
-    LIBSSH2_SFTP_HANDLE *sftp_handle=NULL;
+  ConnectInfo connectInfo;
+  QEventLoop loop;
+  int sock = 0;
+  int running = 1;
+  struct sockaddr_in sin;
+  int rc = 0;
+  LIBSSH2_SESSION *session = NULL;
+  LIBSSH2_SFTP *sftp_session = NULL;
+  LIBSSH2_POLLFD *fds = NULL;
+  void close_connect();
 
-    void close_connect();
+public slots:
+  void scpUpload(QString filePath, QString remotePath);
 
+  void scpDownload(QString filePath, QString remotePath);
+
+  void opendir(QString sftpPath);
 
 signals:
-    void errorMsg(QString msg);
-    void successMsg(QString msg);
-    void connectSuccess();
-    void authSuccess();
+  void asyncScpUpload(QString filePath, QString remotePath);
 
-    void opendirCallBack(QString data);
+  void asyncScpDownload(QString filePath, QString remotePath);
 
-    void opendirInfoCallBack(QString dirPath,QString data);
+  void asyncOpendir(QString sftpPath);
 
-    void initSftpSessionSuccess();
+  void errorMsg(QString msg);
+  void successMsg(QString msg);
+  void connectSuccess();
+  void authSuccess();
 
-    void fileUploadProcess(int fileSize,int currentSize,float process);
-    void fileUploadSuccess();
+  void opendirCallBack(QString data);
 
-    void fileDownloadProcess(int fileSize,int currentSize,float process);
-    void fileDownloadSuccess();
+  void opendirInfoCallBack(QString dirPath, QString data);
 
-    void opendirEvent(QString dirPath);
+  void initSftpSessionSuccess();
 
+  void fileUploadProcess(int fileSize, int currentSize, float process);
+  void fileUploadSuccess();
+
+  void fileDownloadProcess(int fileSize, int currentSize, float process);
+  void fileDownloadSuccess();
+
+  void opendirEvent(QString dirPath);
+  void disconnected();
 };
 
 #endif // SFTPCLIENT_H

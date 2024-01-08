@@ -1,0 +1,40 @@
+{
+  "name": "libvncserver",
+  "version": "0.9.14",
+  "description": "LibVNCServer/LibVNCClient are cross-platform C libraries that allow you to easily implement VNC server or client functionality in your program.",
+  "homepage": "https://github.com/LibVNC/libvncserver",
+  "license": "GPL-2.0",
+  "dependencies": [
+    {
+      "name": "libvncserver",
+      "default-features": false,
+      "features": [
+        "openssl"
+      ],
+      "platform": "!windows"
+    },
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ],
+  "default-features": [
+    "openssl",
+    "websockets"
+  ],
+  "features": {
+    "openssl": {
+      "description": "Use the openssl 1.1.1g crypto backend",
+      "dependencies": [
+        "openssl"
+      ]
+    },
+    "websockets": {
+      "description": "Build with websockets support"
+    }
+  }
+}

@@ -1,22 +1,6 @@
 # ishell
 
-<h3>ishell 是一个跨平台的shell命令行、文件管理工具，采用Qt5+libssh2+Xterm.js编码</h3>
-<h3>可以运行在windows Linux（Ubuntu、统信UOS、Deepin） Mac 平台。</h3>
-
-## 编译
-
-### WIN64
-
-  ```
-  MSVC+libssh2+openssl+QT5.12.10+Cmake
-  ```
-  libssh2和openssl 库在win分支Libs目录下
-
-### Unix/Linux
-
-  ```
-  GCC+libssh2+openssl+QT5.12.10+Cmake(Qtcreator)
-  ```
+<h3>ishell是一个跨平台"Unix/Linux命令行、VNC、RDP、文件管理"工具，可以运行在Windows 、Linux（Ubuntu、统信UOS、Deepin）、 Mac 平台。</h3>
 
 ## GUI
 
