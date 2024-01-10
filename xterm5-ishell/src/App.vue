@@ -70,13 +70,12 @@ export default {
 
     window.addEventListener("resize", this.onResize);
 
-    // terminal.onData((key) => {
-    //   window.core.recieveJsMessage(key);
-    // });
-    terminal.onKey(e => {
-      // console.error(e.key)
-      window.core.recieveJsMessage(e.key);
+    terminal.onData((key) => {
+      window.core.recieveJsMessage(key);
     });
+    // terminal.onKey(e => {
+    //   window.core.recieveJsMessage(e.key);
+    // });
     terminal.onResize((size) => {
       console.error("terminal onResize cols  " + size.cols + " rows " + size.rows)
       var ss = size.rows + "," + size.cols;

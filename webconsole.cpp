@@ -26,7 +26,6 @@ WebConsole::WebConsole(QWidget *parent, ConnectInfo *connectInfo)
   webView->resize(parent->size());
 
   QFile file(":/html/xterm5/index.html");
-  //  QFile file(":/html/xterm.html");
   if (!file.open(QIODevice::ReadOnly)) {
     return;
   }
@@ -34,6 +33,7 @@ WebConsole::WebConsole(QWidget *parent, ConnectInfo *connectInfo)
   webView->setHtml(htmlData);
 
   //  webView->setUrl(QUrl("http://192.168.0.110:8080/"));
+  // webView->setUrl(QUrl("chrome://gpu"));
   webView->show();
   connect(webView, SIGNAL(loadFinished(bool)), this,
           SLOT(pageLoadFinished(bool)));
