@@ -73,7 +73,7 @@ void ConnectEditUI::on_authType_currentIndexChanged(int index) {
 
 void ConnectEditUI::on_selectPrivateKeyFileButton_clicked() {
   QString filePath =
-      QFileDialog::getOpenFileName(this, tr("选择私钥文件"), "", tr("*"));
+      QFileDialog::getOpenFileName(this, tr("选择私钥文件"), "", tr("*"),0,QFileDialog::DontUseNativeDialog);
   ui->privateKeyFilePath->setText(filePath);
 }
 
@@ -119,7 +119,7 @@ void ConnectEditUI::setConnectInfo(ConnectInfo info) {
 
 void ConnectEditUI::on_selectPublicKeyFileButton_clicked() {
   QString filePath =
-      QFileDialog::getOpenFileName(this, tr("选择公钥文件"), "", tr("*"));
+      QFileDialog::getOpenFileName(this, tr("选择公钥文件"), "", tr("*"),0,QFileDialog::DontUseNativeDialog);
   ui->publickKeyFilePath->setText(filePath);
 }
 

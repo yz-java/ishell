@@ -306,7 +306,7 @@ void FolderItemWidget::treeWidgetItemRefresh(QTreeWidgetItem *item) {
 
 void FolderItemWidget::fileUpload(QString filePath) {
   if (filePath.isEmpty()) {
-    filePath = QFileDialog::getOpenFileName(this, tr("选择文件"), "", tr("*"));
+    filePath = QFileDialog::getOpenFileName(this, tr("选择文件"), "", tr("*"),0,QFileDialog::DontUseNativeDialog);
   }
   if (filePath.isEmpty()) {
     return;

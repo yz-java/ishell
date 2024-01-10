@@ -223,7 +223,7 @@ void SFTPClient::run() {
   if (!this->initSftpSession()) {
     return;
   }
-
+#ifndef Q_OS_MAC
   std::thread t([=]() {
     LIBSSH2_POLLFD *fds = NULL;
     if ((fds = static_cast<LIBSSH2_POLLFD *>(malloc(sizeof(LIBSSH2_POLLFD)))) ==
@@ -234,20 +234,6 @@ void SFTPClient::run() {
     fds[0].fd.socket = sock;
     fds[0].events = LIBSSH2_POLLFD_POLLHUP;
     libssh2_poll(fds, 1, -1);
-    // while (running) {
-    //   int act = 0;
-    //   int rc = libssh2_poll(fds, 1, -1);
-    //   if (rc < 1) {
-    //     continue;
-    //   }
-    //   if (fds[0].revents & LIBSSH2_POLLFD_POLLHUP) {
-    //     /* don't leave loop until we have read all data */
-    //     if (!act) {
-    //       running = 0;
-    //       emit disconnected();
-    //     }
-    //   }
-    // }
     if (fds) {
       free(fds);
       fds = NULL;
@@ -255,6 +241,7 @@ void SFTPClient::run() {
     emit disconnected();
   });
   t.detach();
+#endif
   exec();
 }
 

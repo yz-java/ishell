@@ -266,43 +266,63 @@ void SSHClient::run() {
   int ret = 0;
 
   while (running) {
+#ifndef Q_OS_MAC
     int act = 0;
     int rc = libssh2_poll(fds, 2, -1);
     if (rc < 1) {
-      continue;
+        continue;
     }
+    if (fds[0].revents & LIBSSH2_POLLFD_POLLIN) {
+        act++;
+        ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
+        if (length > 0) {
+            QByteArray buffer(buf, length);
+            QString data = QString::fromUtf8(buffer);
+
+            emit readChannelData(data);
+
+        } else if (length == LIBSSH2_ERROR_EAGAIN) {
+            continue;
+        } else {
+            emit readChannelData("\nSSH会话连接异常");
+            emit disconnected();
+            goto END;
+        }
+    }
+    if (fds[0].revents & LIBSSH2_POLLFD_CHANNEL_CLOSED ||
+        fds[1].revents & LIBSSH2_POLLFD_POLLHUP) {
+        /* don't leave loop until we have read all data */
+        if (!act) {
+            running = 0;
+            emit readChannelData("\nSSH会话连接关闭");
+            emit disconnected();
+        }
+    }
+#endif
     if ((ret = libssh2_channel_eof(channel)) == 1) {
       emit readChannelData("\n目标主动断开连接");
       emit disconnected();
       goto END;
     }
-
-    if (fds[0].revents & LIBSSH2_POLLFD_POLLIN) {
-      act++;
-      ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
-      if (length > 0) {
+#ifdef Q_OS_MAC
+    ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
+    if (length > 0) {
         QByteArray buffer(buf, length);
         QString data = QString::fromUtf8(buffer);
 
         emit readChannelData(data);
 
-      } else if (length == LIBSSH2_ERROR_EAGAIN) {
+    } else if (length == LIBSSH2_ERROR_EAGAIN) {
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         continue;
-      } else {
+    } else {
         emit readChannelData("\nSSH会话连接异常");
         emit disconnected();
         goto END;
-      }
     }
-    if (fds[0].revents & LIBSSH2_POLLFD_CHANNEL_CLOSED ||
-        fds[1].revents & LIBSSH2_POLLFD_POLLHUP) {
-      /* don't leave loop until we have read all data */
-      if (!act) {
-        running = 0;
-        emit readChannelData("\nSSH会话连接关闭");
-        emit disconnected();
-      }
-    }
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+#endif
+
   }
   delete[] buf;
   return;

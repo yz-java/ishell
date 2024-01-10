@@ -1,6 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.5)
 if(WIN32)
   set(CMAKE_TOOLCHAIN_FILE D:/vcpkg/scripts/buildsystems/vcpkg.cmake)
+elseif(APPLE)
+  set(CMAKE_TOOLCHAIN_FILE /Users/yangzhao/Desktop/my_project/vcpkg/scripts/buildsystems/vcpkg.cmake)
 elseif(UNIX)
   set(CMAKE_TOOLCHAIN_FILE /home/yangzhao/project/vcpkg/scripts/buildsystems/vcpkg.cmake)
 endif(WIN32)
@@ -24,7 +26,6 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebChannel 
 
 IF (WIN32)
   MESSAGE(STATUS "Now is windows")
-
   set(executable_flag "WIN32" "app_win32.rc")
   set(target_link_libraries_flag "ws2_32" "zlib")
   set(LibVNCServer_PATH "")
@@ -32,7 +33,7 @@ ELSEIF (APPLE)
   MESSAGE(STATUS "Now is Apple systens.")
 ELSEIF (UNIX)
   MESSAGE(STATUS "Now is UNIX-like OS's.")
-  set(target_link_libraries_flag "pthread" "X11" "-lXext" "-lXcursor" "rt")
+  set(target_link_libraries_flag "pthread" "X11" "-lXext" "-lXcursor" "rt" "freerdp" "winpr" "freerdp-client")
   add_definitions(-DUNIX)
 ENDIF ()
 
@@ -59,16 +60,15 @@ AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/components SRC_LIST_CPP)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/db SRC_LIST_CPP)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/utils SRC_LIST_CPP)
 
-if(UNIX)
-find_package(FreeRDP CONFIG REQUIRED)
-message(STATUS "FreeRDP_INCLUDE_DIR is ${FreeRDP_INCLUDE_DIR}")
-find_package(WinPR CONFIG REQUIRED)
-message(STATUS "WinPR_INCLUDE_DIR is ${WinPR_INCLUDE_DIR}")
-find_package(FreeRDP-Client CONFIG REQUIRED)
-list(APPEND SRC_LIST_CPP xfree-rdp/xf_client.h xfree-rdp/xfreerdp.h)
-aux_source_directory(${PROJECT_SOURCE_DIR}/xfree-rdp SRC_LIST_CPP)
-# list(APPEND SRC_LIST_CPP xfreerdp/xf_client.h xfreerdp/xfreerdp.h)
-# aux_source_directory(${PROJECT_SOURCE_DIR}/xfreerdp SRC_LIST_CPP)
+if(APPLE)
+elseif(UNIX)
+  find_package(FreeRDP CONFIG REQUIRED)
+  message(STATUS "FreeRDP_INCLUDE_DIR is ${FreeRDP_INCLUDE_DIR}")
+  find_package(WinPR CONFIG REQUIRED)
+  message(STATUS "WinPR_INCLUDE_DIR is ${WinPR_INCLUDE_DIR}")
+  find_package(FreeRDP-Client CONFIG REQUIRED)
+  list(APPEND SRC_LIST_CPP xfree-rdp/xf_client.h xfree-rdp/xfreerdp.h)
+  aux_source_directory(${PROJECT_SOURCE_DIR}/xfree-rdp SRC_LIST_CPP)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -110,10 +110,7 @@ target_link_libraries(
   Qt${QT_VERSION_MAJOR}::Concurrent
   Qt${QT_VERSION_MAJOR}::WebSockets
   LibVNCServer::vncclient
-  SDL2
-  freerdp
-  winpr
-  freerdp-client
+  SDL2::SDL2
   $<IF:$<TARGET_EXISTS:Libssh2::libssh2_shared>,Libssh2::libssh2_shared,Libssh2::libssh2_static>
   OpenSSL::SSL OpenSSL::Crypto
   ${target_link_libraries_flag}

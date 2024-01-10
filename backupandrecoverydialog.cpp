@@ -59,20 +59,26 @@ BackupAndRecoveryDialog::~BackupAndRecoveryDialog()
 //备份选择按钮
 void BackupAndRecoveryDialog::on_pushButton_clicked()
 {
-    QFileDialog* dialog=new QFileDialog();
-    dialog->setFileMode(QFileDialog::Directory);
-    dialog->setWindowTitle("选择备份位置");
-    if(!dialog->exec()){
-        return;
-    }
-    QString localPath = dialog->selectedFiles().at(0);
-    ui->backupPath->setText(localPath);
+    QString directory = QFileDialog::getExistingDirectory(
+        this,
+        tr("选择备份位置"),
+        nullptr,
+        QFileDialog::DontUseNativeDialog);
+
+//    QFileDialog* dialog=new QFileDialog();
+//    dialog->setFileMode(QFileDialog::Directory);
+//    dialog->setWindowTitle("选择备份位置");
+//    if(!dialog->exec()){
+//        return;
+//    }
+//    QString localPath = dialog->selectedFiles().at(0);
+    ui->backupPath->setText(directory);
 
 }
 //恢复选择按钮
 void BackupAndRecoveryDialog::on_pushButton_2_clicked()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("选择文件恢复"), "",  tr("*"));
+    QString filePath = QFileDialog::getOpenFileName(this, tr("选择文件恢复"), "",  tr("*"),0,QFileDialog::DontUseNativeDialog);
     ui->recoveryFilePath->setText(filePath);
 }
 

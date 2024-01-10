@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>410</width>
-    <height>460</height>
+    <height>456</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -92,11 +92,11 @@
      <x>10</x>
      <y>130</y>
      <width>391</width>
-     <height>284</height>
+     <height>291</height>
     </rect>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -211,7 +211,7 @@
          <property name="minimumSize">
           <size>
            <width>60</width>
-           <height>0</height>
+           <height>21</height>
           </size>
          </property>
          <property name="text">
@@ -221,6 +221,12 @@
        </item>
        <item>
         <widget class="QLineEdit" name="publickKeyFilePath">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>21</height>
+          </size>
+         </property>
          <property name="text">
           <string/>
          </property>
@@ -245,7 +251,7 @@
          <property name="minimumSize">
           <size>
            <width>60</width>
-           <height>0</height>
+           <height>21</height>
           </size>
          </property>
          <property name="text">
@@ -255,6 +261,12 @@
        </item>
        <item>
         <widget class="QLineEdit" name="privateKeyFilePath">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>21</height>
+          </size>
+         </property>
          <property name="text">
           <string/>
          </property>
@@ -304,7 +316,7 @@
     <attribute name="title">
      <string>VNC认证</string>
     </attribute>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -336,7 +348,7 @@
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -364,7 +376,7 @@
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
