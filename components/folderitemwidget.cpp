@@ -1,10 +1,13 @@
-#include "folderitemwidget.h"
+﻿#include "folderitemwidget.h"
 
 #include <QDebug>
 #include <QPainter>
 
 #include "confirmdialog.h"
 #include "fileinfo.h"
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
 FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
     : QWidget(parent) {
   setAcceptDrops(true);

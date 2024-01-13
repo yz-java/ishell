@@ -1,4 +1,4 @@
-#ifndef FOLDERITEMWIDGET_H
+﻿#ifndef FOLDERITEMWIDGET_H
 #define FOLDERITEMWIDGET_H
 
 #include "sftpclient.h"

@@ -1,6 +1,8 @@
 ﻿#include "sshclient.h"
 
+#ifdef UNIX
 #include <netinet/tcp.h>
+#endif
 
 #include <QHostInfo>
 #include <QTimer>
@@ -227,7 +229,7 @@ void SSHClient::close_connect() {
 
 void SSHClient::exec(QString shell) {
   //  qDebug() << "execCmd ThreadId is" << QThread::currentThreadId();
-  QByteArray data = shell.toLocal8Bit();
+  QByteArray data = shell.toUtf8();
   int size = data.size();
   //    libssh2_channel_write(channel, shell.toLocal8Bit(), size);
   libssh2_channel_write_ex(channel, 0, data, size);

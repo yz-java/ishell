@@ -27,7 +27,7 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebChannel 
 IF (WIN32)
   MESSAGE(STATUS "Now is windows")
   set(executable_flag "WIN32" "app_win32.rc")
-  set(target_link_libraries_flag "ws2_32" "zlib")
+  set(target_link_libraries_flag "ws2_32")
   set(LibVNCServer_PATH "")
 ELSEIF (APPLE)
   MESSAGE(STATUS "Now is Apple systens.")
