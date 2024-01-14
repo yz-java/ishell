@@ -96,7 +96,7 @@ endif()
 
 
 
-# set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "$ORIGIN/lib")
+set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "$ORIGIN/lib")
 
 target_link_libraries( 
   ${PROJECT_NAME} PRIVATE  

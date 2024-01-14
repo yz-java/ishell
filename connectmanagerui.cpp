@@ -172,7 +172,7 @@ void ConnectManagerUI::popMenu(const QPoint& p) {
     connect(connectVNC, &QAction::triggered,
             [&]() { emit openVNCConnect(info); });
     menu.addAction(connectVNC);
-#ifdef UNIX
+#ifdef Q_OS_LINUX
     connectRDP = new QAction("RDP连接", this);
     connect(connectRDP, &QAction::triggered,
             [&]() { emit openRDPConnect(info); });
