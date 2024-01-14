@@ -1,6 +1,6 @@
 ﻿#include "sshclient.h"
 
-#ifdef UNIX
+#ifdef Q_OS_UNIX
 #include <netinet/tcp.h>
 #endif
 
@@ -24,11 +24,9 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session) {
   /* now make sure we wait in the correct direction */
   dir = libssh2_session_block_directions(session);
 
-  if (dir & LIBSSH2_SESSION_BLOCK_INBOUND)
-    readfd = &fd;
+  if (dir & LIBSSH2_SESSION_BLOCK_INBOUND) readfd = &fd;
 
-  if (dir & LIBSSH2_SESSION_BLOCK_OUTBOUND)
-    writefd = &fd;
+  if (dir & LIBSSH2_SESSION_BLOCK_OUTBOUND) writefd = &fd;
 
   rc = select(socket_fd + 1, readfd, writefd, NULL, &timeout);
 
@@ -72,12 +70,14 @@ SSHClient::SSHClient(QString hostName, QString port, QString username,
 bool SSHClient::connect() {
   qDebug() << "开始连接";
   sock = socket(AF_INET, SOCK_STREAM, 0);
-#ifdef UNIX
+#ifdef Q_OS_UNIX
   int keepalive = 1;
-  int keepidle = 10; // 如该连接在10秒内没有任何数据往来,则进行探测
-  int keepcount =
-      3; //探测尝试的次数.如果第1次探测包就收到响应了,则后2次的不再发.
-  int keepintvl = 10; //每次间隔时间
+  //   如该连接在10秒内没有任何数据往来,则进行探测
+  int keepidle = 10;
+  //  探测尝试的次数.如果第1次探测包就收到响应了,则后2次的不再发.
+  int keepcount = 3;
+  //  每次间隔时间
+  int keepintvl = 10;
   setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount));
@@ -271,38 +271,38 @@ void SSHClient::run() {
     int act = 0;
     int rc = libssh2_poll(fds, 2, 1000);
     if (rc < 1) {
-        continue;
+      continue;
     }
     if ((ret = libssh2_channel_eof(channel)) == 1) {
-        emit readChannelData("\n目标主动断开连接");
-        emit disconnected();
-        goto END;
+      emit readChannelData("\n目标主动断开连接");
+      emit disconnected();
+      goto END;
     }
     if (fds[0].revents & LIBSSH2_POLLFD_POLLIN) {
-        act++;
-        ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
-        if (length > 0) {
-            QByteArray buffer(buf, length);
-            QString data = QString::fromUtf8(buffer);
+      act++;
+      ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
+      if (length > 0) {
+        QByteArray buffer(buf, length);
+        QString data = QString::fromUtf8(buffer);
 
-            emit readChannelData(data);
+        emit readChannelData(data);
 
-        } else if (length == LIBSSH2_ERROR_EAGAIN) {
-            continue;
-        } else {
-            emit readChannelData("\nSSH会话连接异常");
-            emit disconnected();
-            goto END;
-        }
+      } else if (length == LIBSSH2_ERROR_EAGAIN) {
+        continue;
+      } else {
+        emit readChannelData("\nSSH会话连接异常");
+        emit disconnected();
+        goto END;
+      }
     }
     if (fds[0].revents & LIBSSH2_POLLFD_CHANNEL_CLOSED ||
         fds[1].revents & LIBSSH2_POLLFD_POLLHUP) {
-        /* don't leave loop until we have read all data */
-        if (!act) {
-            running = 0;
-            emit readChannelData("\nSSH会话连接关闭");
-            emit disconnected();
-        }
+      /* don't leave loop until we have read all data */
+      if (!act) {
+        running = 0;
+        emit readChannelData("\nSSH会话连接关闭");
+        emit disconnected();
+      }
     }
   }
   delete[] buf;

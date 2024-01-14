@@ -30,11 +30,9 @@ static int waitsocket(libssh2_socket_t socket_fd, LIBSSH2_SESSION *session) {
   /* now make sure we wait in the correct direction */
   dir = libssh2_session_block_directions(session);
 
-  if (dir & LIBSSH2_SESSION_BLOCK_INBOUND)
-    readfd = &fd;
+  if (dir & LIBSSH2_SESSION_BLOCK_INBOUND) readfd = &fd;
 
-  if (dir & LIBSSH2_SESSION_BLOCK_OUTBOUND)
-    writefd = &fd;
+  if (dir & LIBSSH2_SESSION_BLOCK_OUTBOUND) writefd = &fd;
 
   rc = select((int)(socket_fd + 1), readfd, writefd, NULL, &timeout);
 
@@ -59,12 +57,14 @@ SFTPClient::SFTPClient(ConnectInfo connectInfo) : QThread() {
 bool SFTPClient::connect() {
   qDebug() << "开始连接";
   sock = socket(AF_INET, SOCK_STREAM, 0);
-#ifdef UNIX
+#ifdef Q_OS_UNIX
   int keepalive = 1;
-  int keepidle = 10; // 如该连接在10秒内没有任何数据往来,则进行探测
-  int keepcount =
-      3; //探测尝试的次数.如果第1次探测包就收到响应了,则后2次的不再发.
-  int keepintvl = 10; //每次间隔时间
+  //  如该连接在10秒内没有任何数据往来,则进行探测
+  int keepidle = 10;
+  //  探测尝试的次数.如果第1次探测包就收到响应了,则后2次的不再发.
+  int keepcount = 3;
+  //  每次间隔时间
+  int keepintvl = 10;
   setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount));
@@ -88,15 +88,12 @@ bool SFTPClient::connect() {
 
 bool SFTPClient::openSession() {
   session = libssh2_session_init();
-  if (!session)
-    return false;
+  if (!session) return false;
   libssh2_session_set_blocking(session, 0);
-  // libssh2_session_handshake(session, sock);
   while ((rc = libssh2_session_handshake(session, sock)) ==
          LIBSSH2_ERROR_EAGAIN) {
     waitsocket(sock, session);
   }
-  // libssh2_session_set_timeout(session, 0);
   return true;
 }
 
@@ -145,7 +142,6 @@ bool SFTPClient::initSftpSession() {
 
     if (!sftp_session) {
       if (libssh2_session_last_errno(session) == LIBSSH2_ERROR_EAGAIN) {
-
         fprintf(stderr, "non-blocking init\n");
         waitsocket(sock, session); /* now we wait */
       } else {
@@ -169,7 +165,6 @@ void SFTPClient::opendir(QString sftpPath) {
         libssh2_sftp_opendir(sftp_session, sftpPath.toStdString().data());
     if (!sftp_handle) {
       if (libssh2_session_last_errno(session) != LIBSSH2_ERROR_EAGAIN) {
-
         fprintf(stderr, "Unable to open file with SFTP: %ld\n",
                 libssh2_sftp_last_error(sftp_session));
 
@@ -233,11 +228,11 @@ void SFTPClient::run() {
     fds[0].fd.socket = sock;
     fds[0].events = LIBSSH2_POLLFD_POLLHUP;
     while (true) {
-        int rc =libssh2_poll(fds, 1, 1000);
-        if(rc>0){
-            break;
-        }
-        continue;
+      int rc = libssh2_poll(fds, 1, 1000);
+      if (rc > 0) {
+        break;
+      }
+      continue;
     }
     if (fds) {
       free(fds);
@@ -320,7 +315,6 @@ void SFTPClient::scpUpload(QString filePath, QString remotePath) {
             LIBSSH2_SFTP_S_IROTH);
     if (!sftp_handle &&
         libssh2_session_last_errno(session) != LIBSSH2_ERROR_EAGAIN) {
-
       fprintf(stderr, "Unable to open file with SFTP: %ld\n",
               libssh2_sftp_last_error(sftp_session));
 
@@ -345,8 +339,7 @@ void SFTPClient::scpUpload(QString filePath, QString remotePath) {
              LIBSSH2_ERROR_EAGAIN) {
         waitsocket(sock, session);
       }
-      if (rc < 0)
-        break;
+      if (rc < 0) break;
       currentSize += rc;
       ptr += rc;
       readSize -= rc;
@@ -368,7 +361,6 @@ void SFTPClient::scpDownload(QString remotePath, QString localPath) {
         sftp_session, remotePath.toStdString().c_str(), LIBSSH2_FXF_READ, 0);
     if (!sftp_handle) {
       if (libssh2_session_last_errno(session) != LIBSSH2_ERROR_EAGAIN) {
-
         fprintf(stderr, "Unable to open file with SFTP: %ld\n",
                 libssh2_sftp_last_error(sftp_session));
 

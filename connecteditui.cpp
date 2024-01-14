@@ -12,7 +12,7 @@ ConnectEditUI::ConnectEditUI(QWidget *parent, QString title)
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowTitle(title);
   setWindowFlags(windowFlags() &
-                 ~Qt::WindowMaximizeButtonHint);  // 禁止最大化按钮
+                 ~Qt::WindowMaximizeButtonHint); // 禁止最大化按钮
   setFixedSize(this->width(), this->height());
   ui->save->setIcon(QIcon(":/icons/save.png"));
   ui->cancel->setIcon(QIcon(":/icons/cancel.png"));
@@ -73,7 +73,8 @@ void ConnectEditUI::on_authType_currentIndexChanged(int index) {
 
 void ConnectEditUI::on_selectPrivateKeyFileButton_clicked() {
   QString filePath =
-      QFileDialog::getOpenFileName(this, tr("选择私钥文件"), "", tr("*"),0,QFileDialog::DontUseNativeDialog);
+      QFileDialog::getOpenFileName(this, tr("选择私钥文件"), "", tr("*"), 0,
+                                   QFileDialog::DontUseNativeDialog);
   ui->privateKeyFilePath->setText(filePath);
 }
 
@@ -119,7 +120,8 @@ void ConnectEditUI::setConnectInfo(ConnectInfo info) {
 
 void ConnectEditUI::on_selectPublicKeyFileButton_clicked() {
   QString filePath =
-      QFileDialog::getOpenFileName(this, tr("选择公钥文件"), "", tr("*"),0,QFileDialog::DontUseNativeDialog);
+      QFileDialog::getOpenFileName(this, tr("选择公钥文件"), "", tr("*"), 0,
+                                   QFileDialog::DontUseNativeDialog);
   ui->publickKeyFilePath->setText(filePath);
 }
 

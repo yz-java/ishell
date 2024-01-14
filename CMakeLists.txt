@@ -34,7 +34,6 @@ ELSEIF (APPLE)
 ELSEIF (UNIX)
   MESSAGE(STATUS "Now is UNIX-like OS's.")
   set(target_link_libraries_flag "pthread" "X11" "-lXext" "-lXcursor" "rt" "freerdp" "winpr" "freerdp-client")
-  add_definitions(-DUNIX)
 ENDIF ()
 
 find_package(OpenSSL REQUIRED)
