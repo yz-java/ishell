@@ -34,9 +34,8 @@ void SftpDialog::initUI() {
   rootItem->setText(6, "/");
   rootItem->setIcon(0, QIcon(":/icons/folder.png"));
   rootItem->setExpanded(true);
-  connect(treeView, &QTreeWidget::itemDoubleClicked, this,
+  connect(treeView, &QTreeWidget::itemClicked, this,
           [=](QTreeWidgetItem *item, int column) {
-            qDebug() << "双击";
             folderItemWidget->clearTreeWidget();
             QString currentPath = item->text(6);
             qDebug() << "打开路径：" << currentPath;
@@ -48,7 +47,7 @@ void SftpDialog::initUI() {
   connect(treeView, &QTreeWidget::itemActivated,
           [&](QTreeWidgetItem *item, int column) { qDebug() << "回车"; });
 
-  treeView->setColumnCount(1); //设置列
+  treeView->setColumnCount(1);  //设置列
   treeView->hideColumn(6);
   treeView->setHeaderLabels(QStringList() << "文件名");
 

@@ -1,6 +1,7 @@
 ﻿#include "folderitemwidget.h"
 
 #include <QDebug>
+#include <QMenu>
 #include <QPainter>
 
 #include "confirmdialog.h"
@@ -13,7 +14,6 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
   setAcceptDrops(true);
   this->sftpClient = sftpClient;
   //    setAutoFillBackground(true);
-
   connect(sftpClient, &SFTPClient::opendirCallBack, this, [=](QString data) {
     FileInfo_S info = parseBySftpData(data);
     if (info.fileName == "." || info.fileName == "..") {
@@ -52,11 +52,13 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
             p = QString::number(process, 'f', 4).mid(4, 6).toInt();
             progressBarChild->setValue(p);
           });
-  connect(sftpClient, &SFTPClient::fileUploadSuccess, this, [&]() {
+  connect(sftpClient, &SFTPClient::fileUploadSuccess, this, [=]() {
     progressBarMaster->setHidden(true);
     progressBarChild->setHidden(true);
     treeView->setEnabled(true);
     QMessageBox::information(this, "提示", "上传完成");
+    treeView->clear();
+    sftpClient->asyncOpendir(currentDirPath);
   });
 
   connect(sftpClient, &SFTPClient::fileDownloadProcess, this,
@@ -82,9 +84,9 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
   connect(returnButton, &QPushButton::clicked, this, [=]() {
     QString currentDirStr = this->currentDirEdit->text();
     if (currentDirStr != "/") {
-      currentDirStr.remove(currentDirStr.lastIndexOf('/'),
-                           currentDirStr.length() -
-                               currentDirStr.lastIndexOf('/'));
+      currentDirStr.remove(
+          currentDirStr.lastIndexOf('/'),
+          currentDirStr.length() - currentDirStr.lastIndexOf('/'));
     }
     if (currentDirStr.isEmpty()) {
       currentDirStr = "/";
@@ -113,26 +115,26 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
   gotoButton->setShortcut(Qt::Key_Escape);
   gotoButton->setDefault(true);
   titlelayout->addWidget(gotoButton);
-  QPushButton *refreshButton = new QPushButton("刷新");
-  connect(refreshButton, &QPushButton::clicked, this, [=]() {
-    treeView->clear();
-    sftpClient->asyncOpendir(currentDirPath);
-  });
-  refreshButton->setFixedHeight(30);
-  titlelayout->addWidget(refreshButton);
+  //  QPushButton *refreshButton = new QPushButton("刷新");
+  //  connect(refreshButton, &QPushButton::clicked, this, [=]() {
+  //    treeView->clear();
+  //    sftpClient->asyncOpendir(currentDirPath);
+  //  });
+  //  refreshButton->setFixedHeight(30);
+  //  titlelayout->addWidget(refreshButton);
 
-  QPushButton *newFolderButton = new QPushButton("新建目录");
-  connect(newFolderButton, &QPushButton::clicked, this,
-          [=]() { this->createFolder(); });
-  newFolderButton->setFixedHeight(30);
-  titlelayout->addWidget(newFolderButton);
+  //  QPushButton *newFolderButton = new QPushButton("新建目录");
+  //  connect(newFolderButton, &QPushButton::clicked, this,
+  //          [=]() { this->createFolder(); });
+  //  newFolderButton->setFixedHeight(30);
+  //  titlelayout->addWidget(newFolderButton);
 
   vDirlayout->addLayout(titlelayout);
   treeView = new QTreeWidget(this);
   treeView->setContextMenuPolicy(Qt::CustomContextMenu);
   treeView->sortByColumn(0, Qt::SortOrder::AscendingOrder);
   treeView->setSortingEnabled(true);
-  treeView->setColumnCount(8); //设置列
+  treeView->setColumnCount(8);  //设置列
   treeView->hideColumn(6);
   treeView->setColumnWidth(0, 200);
   treeView->setHeaderLabels(QStringList() << "文件名"
@@ -146,17 +148,9 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
   QFont font;
   font.setPointSize(12);
   treeView->setFont(font);
-  //    treeView->setStyleSheet("QTreeWidget::item { height: 20px; }");
-
-  //    connect(treeView,&QTreeWidget::itemClicked,[&](QTreeWidgetItem *item,
-  //    int column){
-  //        qDebug() << "点击";
-  //    });
-
-  //    connect(treeView,&QTreeWidget::itemPressed,[&](QTreeWidgetItem *item,
-  //    int column){
-  //        qDebug() << "itemPressed";
-  //    });
+  treeView->installEventFilter(this);
+  treeView->setSelectionMode(
+      QAbstractItemView::SelectionMode::ExtendedSelection);
   connect(treeView, &QTreeWidget::itemDoubleClicked, this,
           [=](QTreeWidgetItem *item, int column) {
             qDebug() << "双击";
@@ -170,6 +164,12 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
 
   connect(treeView, &QTreeWidget::itemActivated,
           [&](QTreeWidgetItem *item, int column) { qDebug() << "回车"; });
+  connect(treeView, &QTreeWidget::itemPressed, this,
+          [=](QTreeWidgetItem *item, int column) {
+            if (item == NULL) {
+              treeView->clearSelection();
+            }
+          });
   connect(treeView, SIGNAL(customContextMenuRequested(const QPoint &)), this,
           SLOT(popMenu(const QPoint &)));
   vDirlayout->addWidget(treeView);
@@ -218,82 +218,118 @@ void FolderItemWidget::dropEvent(QDropEvent *event) {
 void FolderItemWidget::paintEvent(QPaintEvent *event) { Q_UNUSED(event); }
 
 void FolderItemWidget::popMenu(const QPoint &p) {
-  QTreeWidgetItem *curItem = treeView->currentItem(); //获取当前被点击的节点
-  if (curItem == NULL || curItem->text(0) == "/") {
-    return;
-  }
+  QTreeWidgetItem *curItem = treeView->currentItem();  //获取当前被点击的节点
 
   QMenu menu(treeView);
-  FileInfo_S info = curItem->data(0, Qt::UserRole + 1).value<FileInfo_S>();
-  QAction *renameAction = new QAction("重命名", this);
-  connect(renameAction, &QAction::triggered, this, [=]() {
-    ConfirmDialog *dialog = new ConfirmDialog(this, "请输入文件名称");
-    dialog->show();
-    connect(dialog, &ConfirmDialog::successEdit, [=](QString input) {
-      QString filePath = curItem->text(6);
-      QFileInfo fileInfo(filePath);
-      QString newFileName = input;
-      if (info.fileType == 2) {
-        newFileName += "." + fileInfo.suffix();
+
+  QList<QTreeWidgetItem *> items = treeView->selectedItems();
+  if (items.size() > 1) {
+    QAction *deleteAction = new QAction("删除", this);
+    connect(deleteAction, &QAction::triggered, this, [&]() {
+      QString content = "";
+      for (QTreeWidgetItem *item : items) {
+        FileInfo_S info = item->data(0, Qt::UserRole + 1).value<FileInfo_S>();
+        content += info.fileName + "\n";
       }
-      QString targetPathName = fileInfo.absolutePath() + "/" + newFileName;
-      qDebug() << filePath << " to " << targetPathName;
-      bool status = sftpClient->rename(filePath, targetPathName);
-      if (status) {
-        curItem->setText(0, newFileName);
-        curItem->setText(6, targetPathName);
+      int result = QMessageBox::warning(
+          this, "资源删除提示", content + "是否删除",
+          QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+      if (result != QMessageBox::Yes) {
+        return;
+      }
+      for (QTreeWidgetItem *item : items) {
+        FileInfo_S info = item->data(0, Qt::UserRole + 1).value<FileInfo_S>();
+        QString path = item->text(6);
+        qDebug() << "删除 ==> " << path;
+        bool status = false;
+        if (info.fileType == 2) {
+          status = sftpClient->removeFile(path);
+        }
+        if (info.fileType == 1) {
+          status = sftpClient->rmdir(path);
+        }
+        if (status) {
+          delete item;
+        }
       }
     });
-  });
-  menu.addAction(renameAction);
-
-  QAction *deleteAction = new QAction("删除", this);
-  connect(deleteAction, &QAction::triggered, this, [&]() {
-    QString path = curItem->text(6);
-    int result = QMessageBox::warning(
-        this, "资源删除提示", "是否删除" + info.fileName,
-        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-    if (result != QMessageBox::Yes) {
-      return;
-    }
-    qDebug() << "删除 ==> " << path;
-    bool status = false;
-    if (info.fileType == 2) {
-      status = sftpClient->removeFile(path);
-    }
-    if (info.fileType == 1) {
-      status = sftpClient->rmdir(path);
-    }
-    if (status) {
-      delete curItem;
-    }
-  });
-  menu.addAction(deleteAction);
-
-  if (info.fileType == 1 || info.fileType == 3) {
-    //        QAction* refreshAction=new QAction("刷新",this);
-    //        connect(refreshAction, &QAction::triggered,this,[&](){
-    //            this->treeWidgetItemRefresh(curItem);
-    //        });
-    //        menu.addAction(refreshAction);
+    menu.addAction(deleteAction);
+    goto END;
+  }
+  if (curItem == NULL) {
+    QAction *refreshAction = new QAction("刷新", this);
+    connect(refreshAction, &QAction::triggered, this, [=]() {
+      treeView->clear();
+      sftpClient->asyncOpendir(currentDirPath);
+    });
+    menu.addAction(refreshAction);
     QAction *mkdirAction = new QAction("新建文件夹", this);
     connect(mkdirAction, &QAction::triggered, this, [&]() { createFolder(); });
     menu.addAction(mkdirAction);
-
     QAction *uploadAction = new QAction("上传文件", this);
     connect(uploadAction, &QAction::triggered, this,
             [&]() { this->fileUpload(""); });
     menu.addAction(uploadAction);
-  }
+  } else {
+    FileInfo_S info = curItem->data(0, Qt::UserRole + 1).value<FileInfo_S>();
+    QAction *renameAction = new QAction("重命名", this);
+    connect(renameAction, &QAction::triggered, this, [=]() {
+      ConfirmDialog *dialog = new ConfirmDialog(this, "请输入文件名称");
+      dialog->show();
+      connect(dialog, &ConfirmDialog::successEdit, [=](QString input) {
+        QString filePath = curItem->text(6);
+        QFileInfo fileInfo(filePath);
+        QString newFileName = input;
+        if (info.fileType == 2) {
+          newFileName += "." + fileInfo.suffix();
+        }
+        QString targetPathName = fileInfo.absolutePath() + "/" + newFileName;
+        qDebug() << filePath << " to " << targetPathName;
+        bool status = sftpClient->rename(filePath, targetPathName);
+        if (status) {
+          curItem->setText(0, newFileName);
+          curItem->setText(6, targetPathName);
+        }
+      });
+    });
+    menu.addAction(renameAction);
 
-  if (info.fileType == 2) {
-    QAction *downloadAction = new QAction("下载", this);
-    connect(downloadAction, &QAction::triggered, this,
-            [&]() { fileDownload(curItem->text(6)); });
-    menu.addAction(downloadAction);
-  }
+    QAction *deleteAction = new QAction("删除", this);
+    connect(deleteAction, &QAction::triggered, this, [&]() {
+      QString path = curItem->text(6);
+      int result = QMessageBox::warning(
+          this, "资源删除提示", "是否删除" + info.fileName,
+          QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+      if (result != QMessageBox::Yes) {
+        return;
+      }
+      qDebug() << "删除 ==> " << path;
+      bool status = false;
+      if (info.fileType == 2) {
+        status = sftpClient->removeFile(path);
+      }
+      if (info.fileType == 1) {
+        status = sftpClient->rmdir(path);
+      }
+      if (status) {
+        delete curItem;
+      }
+    });
+    menu.addAction(deleteAction);
 
-  menu.exec(QCursor::pos()); //在当前鼠标位置显示
+    //    if (info.fileType == 1 || info.fileType == 3) {
+
+    //    }
+
+    if (info.fileType == 2) {
+      QAction *downloadAction = new QAction("下载", this);
+      connect(downloadAction, &QAction::triggered, this,
+              [&]() { fileDownload(curItem->text(6)); });
+      menu.addAction(downloadAction);
+    }
+  }
+END:
+  menu.exec(QCursor::pos());  //在当前鼠标位置显示
 }
 
 void FolderItemWidget::treeWidgetItemRefresh(QTreeWidgetItem *item) {
@@ -309,7 +345,8 @@ void FolderItemWidget::treeWidgetItemRefresh(QTreeWidgetItem *item) {
 
 void FolderItemWidget::fileUpload(QString filePath) {
   if (filePath.isEmpty()) {
-    filePath = QFileDialog::getOpenFileName(this, tr("选择文件"), "", tr("*"),0,QFileDialog::DontUseNativeDialog);
+    filePath = QFileDialog::getOpenFileName(
+        this, tr("选择文件"), "", tr("*"), 0, QFileDialog::DontUseNativeDialog);
   }
   if (filePath.isEmpty()) {
     return;
@@ -359,4 +396,22 @@ void FolderItemWidget::createFolder() {
     }
     disconnect(dialog);
   });
+}
+
+bool FolderItemWidget::eventFilter(QObject *obj, QEvent *e) {
+  QMouseEvent *event = static_cast<QMouseEvent *>(e);
+  if (e->type() == QEvent::KeyPress && ((QKeyEvent *)e)->key() == Qt::Key_F5) {
+    treeView->clear();
+    sftpClient->asyncOpendir(currentDirPath);
+    return QWidget::eventFilter(obj, event);
+  }
+  if (event == nullptr) {
+    return QWidget::eventFilter(obj, event);
+  }
+  QPoint point = event->pos();
+  QTreeWidgetItem *item = treeView->itemAt(point);
+  if (item == nullptr) {
+    treeView->setCurrentItem(NULL);
+  }
+  return QWidget::eventFilter(obj, event);
 }

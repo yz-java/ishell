@@ -1,20 +1,21 @@
 ﻿#ifndef FOLDERITEMWIDGET_H
 #define FOLDERITEMWIDGET_H
 
-#include "sftpclient.h"
 #include <QProgressBar>
 #include <QTableView>
 #include <QtWidgets>
+
+#include "sftpclient.h"
 class FolderItemWidget : public QWidget {
   Q_OBJECT
-public:
+ public:
   FolderItemWidget(QWidget *parent, SFTPClient *sftpClient);
   ~FolderItemWidget();
   void setCurrentDirEdit(QString currentDir);
 
   void clearTreeWidget();
 
-private:
+ private:
   QProgressBar *progressBarMaster;
   QProgressBar *progressBarChild;
   QTreeWidget *treeView;
@@ -32,16 +33,17 @@ private:
 
   void createFolder();
 
-protected:
-  //    void mousePressEvent(QMouseEvent *event);      // 鼠标按下事件
-  void dragEnterEvent(QDragEnterEvent *event); // 拖动进入事件
-  void dragMoveEvent(QDragMoveEvent *event);   // 拖动事件
-  void dropEvent(QDropEvent *event);           // 放下事件
+ protected:
+  //  void mousePressEvent(QMouseEvent *event);     // 鼠标按下事件
+  bool eventFilter(QObject *obj, QEvent *e);
+  void dragEnterEvent(QDragEnterEvent *event);  // 拖动进入事件
+  void dragMoveEvent(QDragMoveEvent *event);    // 拖动事件
+  void dropEvent(QDropEvent *event);            // 放下事件
   void paintEvent(QPaintEvent *event);
-private slots:
+ private slots:
   void popMenu(const QPoint &p);
 
-signals:
+ signals:
 };
 
-#endif // FOLDERITEMWIDGET_H
+#endif  // FOLDERITEMWIDGET_H
