@@ -49,7 +49,7 @@ find_package(Libssh2 CONFIG REQUIRED)
 
 find_package(LibVNCServer CONFIG REQUIRED)
 
-FILE(GLOB SRC_LIST_CPP *.c *.cpp *.h)
+FILE(GLOB SRC_LIST_CPP *.c *.cpp *.h components/*.h)
 
 file(GLOB_RECURSE QRC_SOURCE_FILES ${PROJECT_SOURCE_DIR}/*.qrc)
 

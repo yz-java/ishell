@@ -5,12 +5,21 @@
 #include <QTableView>
 #include <QtWidgets>
 
+#include "components/confirmdialog.h"
 #include "sftpclient.h"
+
 class FolderItemWidget : public QWidget {
   Q_OBJECT
  public:
   FolderItemWidget(QWidget *parent, SFTPClient *sftpClient);
   ~FolderItemWidget();
+
+  enum FileOption {
+    DEFAULT = 0,
+    MKDIR,
+    RENAME,
+  };
+
   void setCurrentDirEdit(QString currentDir);
 
   void clearTreeWidget();
@@ -22,6 +31,10 @@ class FolderItemWidget : public QWidget {
   QLineEdit *currentDirEdit;
   QString currentDirPath = "/";
   SFTPClient *sftpClient;
+
+  ConfirmDialog *confirmDialog;
+
+  FileOption fileOption = FileOption::DEFAULT;
 
   void setCurrentDir(QString currentDir);
 

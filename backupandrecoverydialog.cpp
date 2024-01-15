@@ -82,7 +82,7 @@ void BackupAndRecoveryDialog::on_backupButton_clicked() {
   QMessageBox::information(this, "提示", "密码、共私钥文件不参与备份");
   ConfirmDialog *confirmDialog = new ConfirmDialog(this, "请输入密码", "确定");
   confirmDialog->show();
-  connect(confirmDialog, &ConfirmDialog::successEdit,
+  connect(confirmDialog, &ConfirmDialog::confirmEditEvent,
           [=](QString input) { backupFile(input); });
 }
 
@@ -94,7 +94,7 @@ void BackupAndRecoveryDialog::on_recoveryButton_clicked() {
   }
   ConfirmDialog *confirmDialog = new ConfirmDialog(this, "请输入密码", "确定");
   confirmDialog->show();
-  connect(confirmDialog, &ConfirmDialog::successEdit,
+  connect(confirmDialog, &ConfirmDialog::confirmEditEvent,
           [=](QString input) { recovery(input); });
 }
 
@@ -106,7 +106,7 @@ void BackupAndRecoveryDialog::on_appendRecoveryButton_clicked() {
   }
   ConfirmDialog *confirmDialog = new ConfirmDialog(this, "请输入密码", "确定");
   confirmDialog->show();
-  connect(confirmDialog, &ConfirmDialog::successEdit,
+  connect(confirmDialog, &ConfirmDialog::confirmEditEvent,
           [=](QString input) { appendRecovery(input); });
 }
 

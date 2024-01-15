@@ -4,7 +4,6 @@
 #include <QMenu>
 #include <QPainter>
 
-#include "confirmdialog.h"
 #include "fileinfo.h"
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
@@ -181,6 +180,36 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
   vDirlayout->addWidget(progressBarMaster);
   vDirlayout->addWidget(progressBarChild);
   setLayout(vDirlayout);
+  confirmDialog = new ConfirmDialog(this);
+  connect(
+      confirmDialog, &ConfirmDialog::confirmEditEvent, this,
+      [=](QString newName) {
+        if (fileOption == FileOption::RENAME) {
+          QTreeWidgetItem *item = treeView->currentItem();
+          FileInfo_S info = item->data(0, Qt::UserRole + 1).value<FileInfo_S>();
+          QString filePath = item->text(6);
+          QFileInfo fileInfo(filePath);
+          QString newFileName = newName;
+          if (info.fileType == 2) {
+            newFileName += "." + fileInfo.suffix();
+          }
+          QString targetPathName = fileInfo.absolutePath() + "/" + newFileName;
+          qDebug() << filePath << " to " << targetPathName;
+          bool status = sftpClient->rename(filePath, targetPathName);
+          if (status) {
+            item->setText(0, newFileName);
+            item->setText(6, targetPathName);
+          }
+        }
+        if (fileOption == FileOption::MKDIR) {
+          bool status = sftpClient->mkdir(currentDirPath + "/" + newName);
+          if (status) {
+            treeView->clear();
+            sftpClient->asyncOpendir(currentDirPath);
+          }
+        }
+        fileOption = FileOption::DEFAULT;
+      });
 }
 
 FolderItemWidget::~FolderItemWidget() {}
@@ -274,23 +303,13 @@ void FolderItemWidget::popMenu(const QPoint &p) {
     FileInfo_S info = curItem->data(0, Qt::UserRole + 1).value<FileInfo_S>();
     QAction *renameAction = new QAction("重命名", this);
     connect(renameAction, &QAction::triggered, this, [=]() {
-      ConfirmDialog *dialog = new ConfirmDialog(this, "请输入文件名称");
-      dialog->show();
-      connect(dialog, &ConfirmDialog::successEdit, [=](QString input) {
-        QString filePath = curItem->text(6);
-        QFileInfo fileInfo(filePath);
-        QString newFileName = input;
-        if (info.fileType == 2) {
-          newFileName += "." + fileInfo.suffix();
-        }
-        QString targetPathName = fileInfo.absolutePath() + "/" + newFileName;
-        qDebug() << filePath << " to " << targetPathName;
-        bool status = sftpClient->rename(filePath, targetPathName);
-        if (status) {
-          curItem->setText(0, newFileName);
-          curItem->setText(6, targetPathName);
-        }
-      });
+      QString filePath = curItem->text(6);
+      QFileInfo fileInfo(filePath);
+      confirmDialog->setTitleText("请输入文件名");
+      confirmDialog->setEditText(fileInfo.baseName());
+      confirmDialog->setOkButtonName("修改");
+      fileOption = FileOption::RENAME;
+      confirmDialog->show();
     });
     menu.addAction(renameAction);
 
@@ -386,16 +405,11 @@ void FolderItemWidget::fileDownload(QString remotePath) {
 }
 
 void FolderItemWidget::createFolder() {
-  ConfirmDialog *dialog = new ConfirmDialog(this, "请输入文件名称", "新建");
-  dialog->show();
-  connect(dialog, &ConfirmDialog::successEdit, [=](QString input) {
-    bool status = sftpClient->mkdir(currentDirPath + "/" + input);
-    if (status) {
-      treeView->clear();
-      sftpClient->asyncOpendir(currentDirPath);
-    }
-    disconnect(dialog);
-  });
+  confirmDialog->setTitleText("请输入文件名");
+  confirmDialog->setEditText("");
+  confirmDialog->setOkButtonName("新建");
+  fileOption = FileOption::MKDIR;
+  confirmDialog->show();
 }
 
 bool FolderItemWidget::eventFilter(QObject *obj, QEvent *e) {
@@ -403,6 +417,20 @@ bool FolderItemWidget::eventFilter(QObject *obj, QEvent *e) {
   if (e->type() == QEvent::KeyPress && ((QKeyEvent *)e)->key() == Qt::Key_F5) {
     treeView->clear();
     sftpClient->asyncOpendir(currentDirPath);
+    return QWidget::eventFilter(obj, event);
+  }
+  if (e->type() == QEvent::KeyPress && ((QKeyEvent *)e)->key() == Qt::Key_F2) {
+    QList<QTreeWidgetItem *> items = treeView->selectedItems();
+    if (items.size() == 1) {
+      QTreeWidgetItem *item = items.at(0);
+      QString filePath = item->text(6);
+      QFileInfo fileInfo(filePath);
+      confirmDialog->setTitleText("请输入文件名");
+      confirmDialog->setEditText(fileInfo.baseName());
+      confirmDialog->setOkButtonName("修改");
+      fileOption = FileOption::RENAME;
+      confirmDialog->show();
+    }
     return QWidget::eventFilter(obj, event);
   }
   if (event == nullptr) {
