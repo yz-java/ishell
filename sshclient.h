@@ -63,8 +63,6 @@ class SSHClient : public QThread {
  private:
   int sock = 0;
 
-  int running = 1;
-
   unsigned long hostaddr = 0;
 
   int port = 22;
@@ -88,8 +86,6 @@ class SSHClient : public QThread {
   LIBSSH2_SESSION *session = NULL;
 
   LIBSSH2_CHANNEL *channel = NULL;
-
-  LIBSSH2_POLLFD *fds = NULL;
 
   /* For select on stdin */
   fd_set set;

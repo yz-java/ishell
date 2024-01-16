@@ -77,7 +77,13 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent)
   treeView = new QTreeWidget(this);
   treeView->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(treeView, &QTreeWidget::itemClicked,
-          [&](QTreeWidgetItem *item, int column) { qDebug() << "点击"; });
+          [&](QTreeWidgetItem *item, int column) {
+            if (treeView->isExpanded(treeView->currentIndex())) {
+              treeView->collapseItem(item);
+            } else {
+              treeView->expandItem(item);
+            }
+          });
 
   connect(
       treeView, &QTreeWidget::itemPressed,
@@ -100,7 +106,7 @@ ConnectManagerUI::ConnectManagerUI(QWidget *parent)
 
   treeView->setColumnWidth(0, 200);
   treeView->setColumnWidth(1, 150);
-  treeView->setColumnCount(8); //设置列
+  treeView->setColumnCount(8);  //设置列
   treeView->hideColumn(4);
   treeView->hideColumn(5);
   treeView->setHeaderLabels(QStringList() << "名称"
@@ -136,18 +142,23 @@ void ConnectManagerUI::createNewServer() {
 }
 
 void ConnectManagerUI::popMenu(const QPoint &p) {
-  QTreeWidgetItem *curItem = treeView->currentItem(); //获取当前被点击的节点
+  QTreeWidgetItem *curItem = treeView->currentItem();  //获取当前被点击的节点
+  QModelIndex modelIndex = treeView->currentIndex();
   if (curItem == NULL) {
-    return; //这种情况是右键的位置不在treeItem的范围内，即在空白位置右击
+    return;  //这种情况是右键的位置不在treeItem的范围内，即在空白位置右击
   }
 
   QMenu menu(treeView);
   QString wellName = curItem->text(0);
   int id = curItem->text(4).toInt();
   ConnectInfo info = ConnectDao::GetInstance()->getConnectInfo(id);
-  QAction *addconnect;
+
   if (info.parentId == 0) {
-    addconnect = new QAction("新增连接", this); //新增连接
+    QAction *refreshAction = new QAction("刷新", this);
+    connect(refreshAction, &QAction::triggered,
+            [&]() { treeView->expand(modelIndex); });
+    menu.addAction(refreshAction);
+    QAction *addconnect = new QAction("新增连接", this);  //新增连接
     connect(addconnect, &QAction::triggered, [&]() {
       QString title = "新增连接";
       ConnectEditUI *connectEditUI = new ConnectEditUI(this, title);
@@ -163,7 +174,7 @@ void ConnectManagerUI::popMenu(const QPoint &p) {
   QAction *connectVNC;
   QAction *connectRDP;
   if (info.parentId != 0) {
-    connectWell = new QAction("SSH连接", this); //连接
+    connectWell = new QAction("SSH连接", this);  //连接
     connect(connectWell, &QAction::triggered,
             [&]() { emit openSSHConnect(info); });
     menu.addAction(connectWell);
@@ -206,7 +217,7 @@ void ConnectManagerUI::popMenu(const QPoint &p) {
   menu.addAction(editWell);
   QAction *deleteWell;
   if (info.id != 1) {
-    deleteWell = new QAction("删除", this); //删除
+    deleteWell = new QAction("删除", this);  //删除
     //在界面上删除该item
     connect(deleteWell, &QAction::triggered, this, [&]() {
       if (info.parentId != 0) {
@@ -228,7 +239,29 @@ void ConnectManagerUI::popMenu(const QPoint &p) {
     menu.addAction(deleteWell);
   }
 
-  menu.exec(QCursor::pos()); //在当前鼠标位置显示
+  if (info.parentId != 0) {
+    QAction *copyAction = new QAction("复制", this);
+    connect(copyAction, &QAction::triggered, this,
+            [=]() { this->copyInfo = info; });
+    menu.addAction(copyAction);
+  }
+
+  if (info.parentId == 0 && copyInfo.id > 0) {
+    QAction *pasteAction = new QAction("黏贴", this);
+    connect(pasteAction, &QAction::triggered, this, [=]() {
+      copyInfo.parentId = id;
+      bool result =
+          ConnectDao::GetInstance()->addConnectInfo(&(this->copyInfo));
+      if (result) {
+        addChileItem(curItem, this->copyInfo);
+        copyInfo = ConnectInfo();
+        treeView->expand(modelIndex);
+      }
+    });
+    menu.addAction(pasteAction);
+  }
+
+  menu.exec(QCursor::pos());  //在当前鼠标位置显示
 }
 
 void ConnectManagerUI::updateConnectName(QTreeWidgetItem *item, int id,
@@ -246,23 +279,24 @@ void ConnectManagerUI::refreshList(QTreeWidgetItem *item) {
   int id = item->text(4).toInt();
   QList<ConnectInfo> infos = ConnectDao::GetInstance()->getConnectInfos(id);
   for (auto info : infos) {
-    QTreeWidgetItem *child = new QTreeWidgetItem(rootItem);
-    child->setText(0, info.name);
-    child->setIcon(0, QIcon(":/icons/server.png"));
-    child->setText(1, info.username);
-    child->setText(2, info.hostName);
-    if (info.port > 0) {
-      child->setText(3, QString::number(info.port));
-    }
-    child->setText(4, QString::number(info.id));
-    if (info.vncPort > 0) {
-      child->setText(6, QString::number(info.vncPort));
-    }
-    if (info.rdpPort > 0) {
-      child->setText(7, QString::number(info.rdpPort));
-    }
-    //        child->setFlags(child->flags() | Qt::ItemIsEditable);
-    rootItem->addChild(child);
+    addChileItem(rootItem, info);
+    //    QTreeWidgetItem *child = new QTreeWidgetItem(rootItem);
+    //    child->setText(0, info.name);
+    //    child->setIcon(0, QIcon(":/icons/server.png"));
+    //    child->setText(1, info.username);
+    //    child->setText(2, info.hostName);
+    //    if (info.port > 0) {
+    //      child->setText(3, QString::number(info.port));
+    //    }
+    //    child->setText(4, QString::number(info.id));
+    //    if (info.vncPort > 0) {
+    //      child->setText(6, QString::number(info.vncPort));
+    //    }
+    //    if (info.rdpPort > 0) {
+    //      child->setText(7, QString::number(info.rdpPort));
+    //    }
+    //    child->setFlags(child->flags() | Qt::ItemIsEditable);
+    //    rootItem->addChild(child);
   }
 }
 
@@ -272,8 +306,17 @@ void ConnectManagerUI::addChileItem(QTreeWidgetItem *item, ConnectInfo info) {
   child->setIcon(0, QIcon(":/icons/server.png"));
   child->setText(1, info.username);
   child->setText(2, info.hostName);
-  child->setText(3, QString::number(info.port));
+  //  child->setText(3, QString::number(info.port));
+  if (info.port > 0) {
+    child->setText(3, QString::number(info.port));
+  }
   child->setText(4, QString::number(info.id));
+  if (info.vncPort > 0) {
+    child->setText(6, QString::number(info.vncPort));
+  }
+  if (info.rdpPort > 0) {
+    child->setText(7, QString::number(info.rdpPort));
+  }
   item->addChild(child);
 }
 

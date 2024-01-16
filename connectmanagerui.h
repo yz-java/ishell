@@ -35,6 +35,8 @@ class ConnectManagerUI : public QWidget {
 
   QList<ConnectInfo> connectInfos;
 
+  ConnectInfo copyInfo;
+
   void updateConnectName(QTreeWidgetItem* item, int id, QString name);
 
   void refreshList(QTreeWidgetItem* item);

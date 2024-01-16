@@ -6,6 +6,7 @@
 
 #include <QHostInfo>
 #include <QTimer>
+#define POLL_TIMEOUT 1000
 static int waitsocket(int socket_fd, LIBSSH2_SESSION *session) {
   struct timeval timeout;
   int rc;
@@ -30,6 +31,18 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session) {
 
   rc = select(socket_fd + 1, readfd, writefd, NULL, &timeout);
 
+  return rc;
+}
+
+static int waitsocket(int socket_fd, int timeout_sec) {
+  struct timeval timeout;
+  int rc;
+  fd_set fd;
+  timeout.tv_sec = timeout_sec;
+  timeout.tv_usec = 0;
+  FD_ZERO(&fd);
+  FD_SET(socket_fd, &fd);
+  rc = select(socket_fd + 1, NULL, &fd, NULL, &timeout);
   return rc;
 }
 
@@ -70,6 +83,7 @@ SSHClient::SSHClient(QString hostName, QString port, QString username,
 bool SSHClient::connect() {
   qDebug() << "开始连接";
   sock = socket(AF_INET, SOCK_STREAM, 0);
+  unsigned long ul = 1;
 #ifdef Q_OS_UNIX
   int keepalive = 1;
   //   如该连接在10秒内没有任何数据往来,则进行探测
@@ -82,17 +96,26 @@ bool SSHClient::connect() {
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &keepintvl, sizeof(keepintvl));
+
+  ioctl(sock, FIONBIO, &ul);  //设置为非阻塞模式
+#else
+  ioctlsocket(sock, FIONBIO, &ul);  //设置为非阻塞模式
 #endif
   sin.sin_family = AF_INET;
   sin.sin_port = port;
   sin.sin_addr.s_addr = hostaddr;
-  if (::connect(sock, (struct sockaddr *)&sin, sizeof(struct sockaddr_in)) !=
-      0) {
-    fprintf(stderr, "Failed to established connection!\n");
-    emit errorMsg("Failed to established connection!");
+  int ret =
+      ::connect(sock, (struct sockaddr *)&sin, sizeof(struct sockaddr_in));
+  ret = waitsocket(sock, 30);
+  if (ret == 0) {
+    emit errorMsg("网络连接超时!");
     return false;
   }
-  qDebug() << "连接成功";
+  if (ret < 0) {
+    emit errorMsg("网络连接失败!");
+    return false;
+  }
+  qDebug() << "网络连接成功";
   return true;
 }
 
@@ -105,7 +128,7 @@ bool SSHClient::openSession() {
   int rc = 0;
   while ((rc = libssh2_session_handshake(session, sock)) ==
          LIBSSH2_ERROR_EAGAIN) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    waitsocket(sock, session);
   }
   if (rc) {
     emit errorMsg("Failed to establishing SSH session");
@@ -128,7 +151,7 @@ bool SSHClient::userauth() {
     std::string p = password.toStdString();
     while ((rc = libssh2_userauth_password(session, un.data(), p.data())) ==
            LIBSSH2_ERROR_EAGAIN) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      waitsocket(sock, session);
     }
     errMsg = "Authentication by password failed";
   }
@@ -140,7 +163,7 @@ bool SSHClient::userauth() {
     while ((rc = libssh2_userauth_publickey_fromfile(
                 session, un.data(), pkf.data(), pvkf.data(), pp.data())) ==
            LIBSSH2_ERROR_EAGAIN) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      waitsocket(sock, session);
     }
     errMsg = "Authentication by public key failed";
   }
@@ -171,8 +194,9 @@ bool SSHClient::open_channel() {
   }
 
   while ((rc = libssh2_channel_request_pty(channel, "xterm")) ==
-         LIBSSH2_ERROR_EAGAIN)
-    ;
+         LIBSSH2_ERROR_EAGAIN) {
+    waitsocket(sock, session);
+  }
   if (rc != 0) {
     emit errorMsg("Failed to request a pty");
     stop();
@@ -180,13 +204,15 @@ bool SSHClient::open_channel() {
   }
   if (pty_rows != 0 && pty_cols != 0) {
     while ((rc = libssh2_channel_request_pty_size(
-                channel, pty_cols, pty_rows)) == LIBSSH2_ERROR_EAGAIN)
-      ;
+                channel, pty_cols, pty_rows)) == LIBSSH2_ERROR_EAGAIN) {
+      waitsocket(sock, session);
+    }
   }
 
   /* Request a shell */
-  while ((rc = libssh2_channel_shell(channel)) == LIBSSH2_ERROR_EAGAIN)
-    ;
+  while ((rc = libssh2_channel_shell(channel)) == LIBSSH2_ERROR_EAGAIN) {
+    waitsocket(sock, session);
+  }
   if (rc != 0) {
     emit errorMsg("Failed to open a shell");
     stop();
@@ -254,6 +280,7 @@ void SSHClient::run() {
     return;
   }
   emit connectSuccess();
+  LIBSSH2_POLLFD *fds = NULL;
   if ((fds = static_cast<LIBSSH2_POLLFD *>(
            malloc(sizeof(LIBSSH2_POLLFD) * 2))) == NULL) {
     return;
@@ -267,16 +294,16 @@ void SSHClient::run() {
   char *buf = new char[READ_BUF_SIZE];
   int ret = 0;
 
-  while (running) {
+  while (true) {
     int act = 0;
-    int rc = libssh2_poll(fds, 2, 1000);
+    int rc = libssh2_poll(fds, 2, POLL_TIMEOUT);
     if (rc < 1) {
       continue;
     }
     if ((ret = libssh2_channel_eof(channel)) == 1) {
       emit readChannelData("\n目标主动断开连接");
       emit disconnected();
-      goto END;
+      break;
     }
     if (fds[0].revents & LIBSSH2_POLLFD_POLLIN) {
       act++;
@@ -284,42 +311,36 @@ void SSHClient::run() {
       if (length > 0) {
         QByteArray buffer(buf, length);
         QString data = QString::fromUtf8(buffer);
-
         emit readChannelData(data);
-
       } else if (length == LIBSSH2_ERROR_EAGAIN) {
         continue;
       } else {
         emit readChannelData("\nSSH会话连接异常");
         emit disconnected();
-        goto END;
+        break;
       }
     }
     if (fds[0].revents & LIBSSH2_POLLFD_CHANNEL_CLOSED ||
         fds[1].revents & LIBSSH2_POLLFD_POLLHUP) {
       /* don't leave loop until we have read all data */
       if (!act) {
-        running = 0;
         emit readChannelData("\nSSH会话连接关闭");
         emit disconnected();
+        break;
       }
     }
   }
-  delete[] buf;
-  return;
-END:
+  if (fds) {
+    free(fds);
+    fds = NULL;
+  }
   delete[] buf;
   this->stop();
 }
 
 void SSHClient::stop() {
-  running = 0;
+  //  QTimer::singleShot(POLL_TIMEOUT, [=]() {});
   free_channel();
   close_session();
   close_connect();
-  libssh2_exit();
-  if (fds) {
-    free(fds);
-    fds = NULL;
-  }
 }

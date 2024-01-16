@@ -36,7 +36,7 @@ using namespace std;
 #include "connectinfo.h"
 class SFTPClient : public QThread {
   Q_OBJECT
-public:
+ public:
   explicit SFTPClient(ConnectInfo connectInfo);
   ~SFTPClient();
   bool connect();
@@ -61,26 +61,26 @@ public:
 
   void stop();
 
-private:
+ private:
   ConnectInfo connectInfo;
-  QEventLoop loop;
+
   int sock = 0;
-  int running = 1;
+
   struct sockaddr_in sin;
   int rc = 0;
   LIBSSH2_SESSION *session = NULL;
   LIBSSH2_SFTP *sftp_session = NULL;
-  LIBSSH2_POLLFD *fds = NULL;
+
   void close_connect();
 
-public slots:
+ public slots:
   void scpUpload(QString filePath, QString remotePath);
 
   void scpDownload(QString filePath, QString remotePath);
 
   void opendir(QString sftpPath);
 
-signals:
+ signals:
   void asyncScpUpload(QString filePath, QString remotePath);
 
   void asyncScpDownload(QString filePath, QString remotePath);
@@ -108,4 +108,4 @@ signals:
   void disconnected();
 };
 
-#endif // SFTPCLIENT_H
+#endif  // SFTPCLIENT_H

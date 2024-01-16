@@ -39,6 +39,18 @@ static int waitsocket(libssh2_socket_t socket_fd, LIBSSH2_SESSION *session) {
   return rc;
 }
 
+static int waitsocket(int socket_fd, int timeout_sec) {
+  struct timeval timeout;
+  int rc;
+  fd_set fd;
+  timeout.tv_sec = timeout_sec;
+  timeout.tv_usec = 0;
+  FD_ZERO(&fd);
+  FD_SET(socket_fd, &fd);
+  rc = select(socket_fd + 1, NULL, &fd, NULL, &timeout);
+  return rc;
+}
+
 SFTPClient::SFTPClient(ConnectInfo connectInfo) : QThread() {
   this->connectInfo = connectInfo;
   rc = libssh2_init(0);
@@ -57,6 +69,7 @@ SFTPClient::SFTPClient(ConnectInfo connectInfo) : QThread() {
 bool SFTPClient::connect() {
   qDebug() << "开始连接";
   sock = socket(AF_INET, SOCK_STREAM, 0);
+  unsigned long ul = 1;
 #ifdef Q_OS_UNIX
   int keepalive = 1;
   //  如该连接在10秒内没有任何数据往来,则进行探测
@@ -69,20 +82,29 @@ bool SFTPClient::connect() {
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &keepintvl, sizeof(keepintvl));
+  //  设置为非阻塞模式
+  ioctl(sock, FIONBIO, &ul);
+#else
+  //  设置为非阻塞模式
+  ioctlsocket(sock, FIONBIO, &ul);
 #endif
   sin.sin_family = AF_INET;
   sin.sin_port = htons(connectInfo.port);
   QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
   QString hostName = info.addresses().first().toString();
   sin.sin_addr.s_addr = inet_addr(hostName.toStdString().data());
-  if (::connect(sock, (struct sockaddr *)&sin, sizeof(struct sockaddr_in)) !=
-      0) {
-    fprintf(stderr, "Failed to established connection!\n");
-    emit errorMsg("网络异常!");
+  int ret =
+      ::connect(sock, (struct sockaddr *)&sin, sizeof(struct sockaddr_in));
+  ret = waitsocket(sock, 30);
+  if (ret == 0) {
+    emit errorMsg("网络连接超时!");
     return false;
   }
-  emit connectSuccess();
-  qDebug() << "连接成功";
+  if (ret < 0) {
+    emit errorMsg("网络连接失败!");
+    return false;
+  }
+  qDebug() << "网络连接成功";
   return true;
 }
 
@@ -434,7 +456,6 @@ void SFTPClient::stop() {
     session = NULL;
   }
   close_connect();
-  libssh2_exit();
   quit();
   wait();
 }
@@ -448,10 +469,5 @@ SFTPClient::~SFTPClient() {
     libssh2_session_disconnect(session,
                                "Session Shutdown, Thank you for playing");
     libssh2_session_free(session);
-  }
-  running = 0;
-  if (fds) {
-    free(fds);
-    fds = NULL;
   }
 }
