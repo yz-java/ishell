@@ -12,11 +12,11 @@
 #include "db/dbutil.h"
 #include "sftpdialog.h"
 #include "ui_mainwindow.h"
+#include "vncviewerwidget.h"
 #include "vncwebviewwdiget.h"
 #include "webconsole.h"
 #include "websocketserver.h"
 extern "C" {
-#include "SDLvncviewer.h"
 #ifdef XFREE_RDP
 //#include "xfreerdp/xfreerdp.h"
 #include "xfree-rdp/xfreerdp.h"
@@ -113,6 +113,7 @@ void MainWindow::openSSHConnect(ConnectInfo connectInfo) {
   ui->tabWidget->insertTab(count, new WebConsole(this, &connectInfo),
                            QIcon(":/icons/console.png"),
                            connectInfo.name + "-ssh");
+
   ui->tabWidget->setTabToolTip(count, connectInfo.hostName);
   ui->tabWidget->setCurrentIndex(count);
   ui->tabWidget->widget(count)->setProperty("type", "ssh");
@@ -129,9 +130,20 @@ void MainWindow::openVNCConnect(ConnectInfo connectInfo) {
     return;
   }
   int count = ui->tabWidget->count();
+#ifdef USE_NOVNC_CLIENT
   ui->tabWidget->insertTab(count, new VncWebViewWdiget(this, connectInfo),
                            QIcon(":/icons/desktop.png"),
                            connectInfo.name + "-vnc");
+#else
+  QScrollArea *w = new QScrollArea(this);
+  QHBoxLayout *centralLayout = new QHBoxLayout;
+  centralLayout->setAlignment(Qt::AlignCenter);
+  centralLayout->setMargin(0);
+  centralLayout->addWidget(new VncViewerWidget(w, connectInfo));
+  w->setLayout(centralLayout);
+  ui->tabWidget->insertTab(count, w, QIcon(":/icons/desktop.png"),
+                           connectInfo.name + "-vnc");
+#endif
   ui->tabWidget->setTabToolTip(count, connectInfo.hostName);
   ui->tabWidget->setCurrentIndex(count);
   ui->tabWidget->widget(count)->setProperty("type", "vnc");
