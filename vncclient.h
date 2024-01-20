@@ -17,12 +17,16 @@ class VncClient : public QThread {
 
   int colorDepth;
 
+  void close();
+
   void sendPointerEvent(int x, int y, int buttonMask);
 
   void sendKeyEvent(int key, bool upOrDown);
 
  private:
   rfbClient* cl;
+
+  bool running = true;
 
   void run() override;
 

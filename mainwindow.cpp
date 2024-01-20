@@ -97,8 +97,13 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index) {
   }
   QString type = ui->tabWidget->widget(index)->property("type").toString();
   if (type == "vnc") {
+#ifdef USE_NOVNC_CLIENT
     VncWebViewWdiget *w = (VncWebViewWdiget *)ui->tabWidget->widget(index);
     w->close();
+#else
+    QWidget *w = ui->tabWidget->widget(index);
+    w->close();
+#endif
   }
   if (type == "ssh") {
     WebConsole *console = (WebConsole *)ui->tabWidget->widget(index);
@@ -135,12 +140,14 @@ void MainWindow::openVNCConnect(ConnectInfo connectInfo) {
                            QIcon(":/icons/desktop.png"),
                            connectInfo.name + "-vnc");
 #else
-  QScrollArea *w = new QScrollArea(this);
-  QHBoxLayout *centralLayout = new QHBoxLayout;
+  QWidget *w = new QWidget();
+  QHBoxLayout *centralLayout = new QHBoxLayout(w);
   centralLayout->setAlignment(Qt::AlignCenter);
   centralLayout->setMargin(0);
-  centralLayout->addWidget(new VncViewerWidget(w, connectInfo));
+  VncViewerWidget *viewerWidget = new VncViewerWidget(w, connectInfo);
+  centralLayout->addWidget(viewerWidget);
   w->setLayout(centralLayout);
+  w->installEventFilter(viewerWidget);
   ui->tabWidget->insertTab(count, w, QIcon(":/icons/desktop.png"),
                            connectInfo.name + "-vnc");
 #endif

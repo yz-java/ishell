@@ -97,6 +97,19 @@ VncClient::VncClient(QString hostName, int port, QString password) : QThread() {
   this->password = password;
 }
 
+void VncClient::close() {
+  running = false;
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  if (cl->sock) {
+    ::close(cl->sock);
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  if (frameBuffer) {
+    delete[] frameBuffer;
+    frameBuffer = NULL;
+  }
+}
+
 void VncClient::sendPointerEvent(int x, int y, int buttonMask) {
   SendPointerEvent(cl, x, y, buttonMask);
 }
@@ -164,7 +177,7 @@ void VncClient::run() {
   }
   std::thread t([=]() {
     int i = 0;
-    while (1) {
+    while (running) {
       i = WaitForMessage(cl, 500);
       if (i < 0) {
         cleanup(cl);

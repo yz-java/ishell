@@ -78,3 +78,12 @@ void VncViewerWidget::keyReleaseEvent(QKeyEvent *event) {
   rfbKeySym k = event->nativeVirtualKey();
   client->sendKeyEvent(k, false);
 }
+
+bool VncViewerWidget::eventFilter(QObject *watched, QEvent *event) {
+  if (event->type() == QEvent::Close) {
+    client->close();
+    this->close();
+  }
+
+  return QWidget::eventFilter(watched, event);
+}
