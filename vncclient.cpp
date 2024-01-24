@@ -38,9 +38,9 @@ static rfbBool resize(rfbClient *client) {
     default:
       client->format.depth = 24;
       client->format.bitsPerPixel = 32;
-      client->format.redShift = 16;
+      client->format.redShift = 0;
       client->format.greenShift = 8;
-      client->format.blueShift = 0;
+      client->format.blueShift = 16;
       client->format.redMax = 0xff;
       client->format.greenMax = 0xff;
       client->format.blueMax = 0xff;
@@ -59,30 +59,29 @@ static rfbBool resize(rfbClient *client) {
 }
 
 static void update(rfbClient *cl, int x, int y, int w, int h) {
-  //     kDebug(5011) << "updated client: x: " << x << ", y: " << y << ", w: "
-  //     << w << ", h: " << h;
   VncClient *c = (VncClient *)rfbClientGetClientData(cl, 0);
   Q_ASSERT(c);
 
-  const int width = cl->width, height = cl->height;
-  QImage img;
-  switch (c->colorDepth) {
-    case 8:
-      img = QImage(cl->frameBuffer, width, height, QImage::Format_Indexed8);
-      //      img.setColorTable(m_colorTable);
-      break;
-    case 16:
-      img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB16);
-      break;
-    case 32:
-      img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB32);
-      break;
-  }
+  //  const int width = cl->width, height = cl->height;
+  //  QImage img;
+  //  switch (c->colorDepth) {
+  //    case 8:
+  //      img = QImage(cl->frameBuffer, width, height, QImage::Format_Indexed8);
+  //      //      img.setColorTable(m_colorTable);
+  //      break;
+  //    case 16:
+  //      img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB16);
+  //      break;
+  //    case 32:
+  //      img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB32);
+  //      break;
+  //  }
 
-  if (img.isNull()) {
-    qDebug() << "image not loaded";
-  }
-  c->updateImageEvent(img, x, y, w, h);
+  //  if (img.isNull()) {
+  //    qDebug() << "image not loaded";
+  //  }
+  //  c->updateImageEvent(img, x, y, w, h);
+  c->frameUpdateEvent(cl->frameBuffer, x, y, w, h);
 }
 
 static void kbd_leds(rfbClient *cl, int value, int pad) {

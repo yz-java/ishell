@@ -1,11 +1,12 @@
 #ifndef VNCVIEWERWIDGET_H
 #define VNCVIEWERWIDGET_H
 
-#include <QWidget>
+#include <QGLShaderProgram>
+#include <QOpenGLWidget>
 
 #include "connectinfo.h"
 #include "vncclient.h"
-class VncViewerWidget : public QWidget {
+class VncViewerWidget : public QOpenGLWidget {
   Q_OBJECT
  public:
   explicit VncViewerWidget(QWidget* parent, ConnectInfo info);
@@ -15,7 +16,20 @@ class VncViewerWidget : public QWidget {
   VncClient* client;
   QImage img;
   int buttonMask = 0;
-  void paintEvent(QPaintEvent* event);
+
+  QGLShaderProgram program;  // shader程序
+
+  uint8_t* frameBuffer;
+
+  GLuint texture;
+
+  int width;
+
+  int height;
+
+  void initializeGL();
+
+  void paintGL();
   //鼠标移动事件
   void mouseMoveEvent(QMouseEvent* ev);
   void mousePressEvent(QMouseEvent* event);

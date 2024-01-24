@@ -32,6 +32,7 @@ class VncClient : public QThread {
 
  signals:
   void updateImageEvent(QImage image, int x, int y, int w, int h);
+  void frameUpdateEvent(uint8_t* frameBuffer, int x, int y, int w, int h);
   void screenSizeEvent(int w, int h);
 };
 

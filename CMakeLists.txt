@@ -22,8 +22,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ENABLE_WS "use websocket" ON)
 option(ENABLE_NOVNC_CLIENT "use noVnc client" OFF)
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Sql WebChannel WebEngineWidgets WebSockets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebChannel WebEngineWidgets WebSockets REQUIRED)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Sql WebChannel WebEngineWidgets WebSockets OpenGL REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebChannel WebEngineWidgets WebSockets OpenGL REQUIRED)
 
 IF (WIN32)
   MESSAGE(STATUS "Now is windows")
@@ -115,6 +115,8 @@ target_link_libraries(
   Qt${QT_VERSION_MAJOR}::Sql
   Qt${QT_VERSION_MAJOR}::Concurrent
   Qt${QT_VERSION_MAJOR}::WebSockets
+  Qt${QT_VERSION_MAJOR}::OpenGL
+  GL
   LibVNCServer::vncclient
   SDL2::SDL2
   $<IF:$<TARGET_EXISTS:Libssh2::libssh2_shared>,Libssh2::libssh2_shared,Libssh2::libssh2_static>
