@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 option(ENABLE_WS "use websocket" ON)
-option(ENABLE_NOVNC_CLIENT "use noVnc client" OFF)
+option(ENABLE_NOVNC_CLIENT "use noVnc client" ON)
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Sql WebChannel WebEngineWidgets WebSockets OpenGL REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebChannel WebEngineWidgets WebSockets OpenGL REQUIRED)
@@ -28,13 +28,13 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Sql WebChannel 
 IF (WIN32)
   MESSAGE(STATUS "Now is windows")
   set(executable_flag "WIN32" "app_win32.rc")
-  set(target_link_libraries_flag "ws2_32")
-  set(LibVNCServer_PATH "")
+  list(APPEND target_link_libraries_flags "ws2_32")
 ELSEIF (APPLE)
   MESSAGE(STATUS "Now is Apple systens.")
 ELSEIF (UNIX)
   MESSAGE(STATUS "Now is UNIX-like OS's.")
-  set(target_link_libraries_flag "pthread" "X11" "-lXext" "-lXcursor" "rt" "freerdp" "winpr" "freerdp-client")
+  set(target_link_libraries_flags )
+  list(APPEND target_link_libraries_flags "pthread" "X11" "-lXext" "-lXcursor" "rt" "freerdp" "winpr" "freerdp-client" "SDL2::SDL2")
 ENDIF ()
 
 find_package(OpenSSL REQUIRED)
@@ -60,6 +60,21 @@ AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/components SRC_LIST_CPP)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/db SRC_LIST_CPP)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/utils SRC_LIST_CPP)
 
+find_package(OPENGL)
+if(OPENGL_FOUND)
+    message(STATUS "OPENGL_FOUND")
+    set(ENABLE_NOVNC_CLIENT OFF)
+    list(APPEND target_link_libraries_flags "LibVNCServer::vncclient")
+    if(APPLE)
+        list(APPEND target_link_libraries_flags "-framework OpenGL")
+    elseif(UNIX)
+        list(APPEND target_link_libraries_flags "GL")
+    endif()
+else()
+    list(REMOVE_ITEM SRC_LIST_CPP "${CMAKE_CURRENT_SOURCE_DIR}/vncviewerwidget.h" "${CMAKE_CURRENT_SOURCE_DIR}/vncviewerwidget.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/vncclient.h" "${CMAKE_CURRENT_SOURCE_DIR}/vncclient.cpp")
+endif()
+
+message(STATUS "target_link_libraries_flags ==> ${target_link_libraries_flags}")
 if(APPLE)
 elseif(UNIX)
   find_package(FreeRDP CONFIG REQUIRED)
@@ -100,9 +115,6 @@ message(STATUS "support xfreerdp")
 target_compile_definitions(${PROJECT_NAME} PRIVATE  XFREE_RDP)
 endif()
 
-
-
-
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "$ORIGIN/lib")
 
 target_link_libraries( 
@@ -116,12 +128,9 @@ target_link_libraries(
   Qt${QT_VERSION_MAJOR}::Concurrent
   Qt${QT_VERSION_MAJOR}::WebSockets
   Qt${QT_VERSION_MAJOR}::OpenGL
-  GL
-  LibVNCServer::vncclient
-  SDL2::SDL2
   $<IF:$<TARGET_EXISTS:Libssh2::libssh2_shared>,Libssh2::libssh2_shared,Libssh2::libssh2_static>
   OpenSSL::SSL OpenSSL::Crypto
-  ${target_link_libraries_flag}
+  ${target_link_libraries_flags}
 )
 
 

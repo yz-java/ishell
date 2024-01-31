@@ -1,7 +1,9 @@
 #include "vncviewerwidget.h"
 
+#ifdef Q_OS_LINUX
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#endif
 
 #include <QHBoxLayout>
 #include <QMouseEvent>
