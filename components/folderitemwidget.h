@@ -55,6 +55,7 @@ class FolderItemWidget : public QWidget {
   void paintEvent(QPaintEvent *event);
  private slots:
   void popMenu(const QPoint &p);
+  void jumpDir();
 
  signals:
 };

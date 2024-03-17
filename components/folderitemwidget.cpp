@@ -99,17 +99,12 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
 
   currentDirEdit = new QLineEdit;
   currentDirEdit->setFixedHeight(30);
+  connect(currentDirEdit, &QLineEdit::returnPressed, this,
+          &FolderItemWidget::jumpDir);
   titlelayout->addWidget(currentDirEdit);
 
   QPushButton *gotoButton = new QPushButton("跳转");
-  connect(gotoButton, &QPushButton::clicked, this, [=]() {
-    QString currentDir = this->currentDirEdit->text().isEmpty()
-                             ? "/"
-                             : this->currentDirEdit->text();
-    this->setCurrentDirEdit(currentDir);
-    treeView->clear();
-    sftpClient->asyncOpendir(currentDirPath);
-  });
+  connect(gotoButton, &QPushButton::clicked, this, &FolderItemWidget::jumpDir);
   gotoButton->setFixedHeight(30);
   gotoButton->setShortcut(Qt::Key_Escape);
   gotoButton->setDefault(true);
@@ -410,6 +405,15 @@ void FolderItemWidget::createFolder() {
   confirmDialog->setOkButtonName("新建");
   fileOption = FileOption::MKDIR;
   confirmDialog->show();
+}
+
+void FolderItemWidget::jumpDir() {
+  QString currentDir = this->currentDirEdit->text().isEmpty()
+                           ? "/"
+                           : this->currentDirEdit->text();
+  this->setCurrentDirEdit(currentDir);
+  treeView->clear();
+  sftpClient->asyncOpendir(currentDirPath);
 }
 
 bool FolderItemWidget::eventFilter(QObject *obj, QEvent *e) {
