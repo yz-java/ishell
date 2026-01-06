@@ -10,7 +10,7 @@
 
 class FolderItemWidget : public QWidget {
   Q_OBJECT
- public:
+public:
   FolderItemWidget(QWidget *parent, SFTPClient *sftpClient);
   ~FolderItemWidget();
 
@@ -24,7 +24,7 @@ class FolderItemWidget : public QWidget {
 
   void clearTreeWidget();
 
- private:
+private:
   QProgressBar *progressBarMaster;
   QProgressBar *progressBarChild;
   QTreeWidget *treeView;
@@ -46,18 +46,20 @@ class FolderItemWidget : public QWidget {
 
   void createFolder();
 
- protected:
+  void deleteQTreeWidgetItems(QList<QTreeWidgetItem *> items);
+
+protected:
   //  void mousePressEvent(QMouseEvent *event);     // 鼠标按下事件
   bool eventFilter(QObject *obj, QEvent *e);
-  void dragEnterEvent(QDragEnterEvent *event);  // 拖动进入事件
-  void dragMoveEvent(QDragMoveEvent *event);    // 拖动事件
-  void dropEvent(QDropEvent *event);            // 放下事件
+  void dragEnterEvent(QDragEnterEvent *event); // 拖动进入事件
+  void dragMoveEvent(QDragMoveEvent *event);   // 拖动事件
+  void dropEvent(QDropEvent *event);           // 放下事件
   void paintEvent(QPaintEvent *event);
- private slots:
+private slots:
   void popMenu(const QPoint &p);
   void jumpDir();
 
- signals:
+signals:
 };
 
-#endif  // FOLDERITEMWIDGET_H
+#endif // FOLDERITEMWIDGET_H
