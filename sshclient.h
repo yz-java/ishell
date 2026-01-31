@@ -16,7 +16,7 @@
 #include <iostream>
 using namespace std;
 
-#define READ_BUF_SIZE 32000
+#define READ_BUF_SIZE 1024
 
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
@@ -30,7 +30,7 @@ using namespace std;
 
 class SSHClient : public QThread {
   Q_OBJECT
- public:
+public:
   SSHClient(QString hostName, QString port, QString username, QString password);
 
   SSHClient(QString hostName, QString port, QString username,
@@ -60,7 +60,7 @@ class SSHClient : public QThread {
 
   void exec(QString shell);
 
- private:
+private:
   int sock = 0;
 
   unsigned long hostaddr = 0;
@@ -94,7 +94,7 @@ class SSHClient : public QThread {
 
   void run() override;
 
- signals:
+signals:
   void errorMsg(QString errMsg);
   void readChannelData(QString data);
   void connectSuccess();
@@ -103,4 +103,4 @@ class SSHClient : public QThread {
   void openChannelSuccess();
 };
 
-#endif  // SSHCLIENT_H
+#endif // SSHCLIENT_H

@@ -25,9 +25,11 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session) {
   /* now make sure we wait in the correct direction */
   dir = libssh2_session_block_directions(session);
 
-  if (dir & LIBSSH2_SESSION_BLOCK_INBOUND) readfd = &fd;
+  if (dir & LIBSSH2_SESSION_BLOCK_INBOUND)
+    readfd = &fd;
 
-  if (dir & LIBSSH2_SESSION_BLOCK_OUTBOUND) writefd = &fd;
+  if (dir & LIBSSH2_SESSION_BLOCK_OUTBOUND)
+    writefd = &fd;
 
   rc = select(socket_fd + 1, readfd, writefd, NULL, &timeout);
 
@@ -97,9 +99,9 @@ bool SSHClient::connect() {
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount));
   setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &keepintvl, sizeof(keepintvl));
 
-  ioctl(sock, FIONBIO, &ul);  //设置为非阻塞模式
+  ioctl(sock, FIONBIO, &ul); //设置为非阻塞模式
 #else
-  ioctlsocket(sock, FIONBIO, &ul);  //设置为非阻塞模式
+  ioctlsocket(sock, FIONBIO, &ul); //设置为非阻塞模式
 #endif
   sin.sin_family = AF_INET;
   sin.sin_port = port;
@@ -261,6 +263,19 @@ void SSHClient::exec(QString shell) {
   libssh2_channel_write_ex(channel, 0, data, size);
 }
 
+// 获取 UTF-8 字符的字节长度
+int utf8_char_length(unsigned char first_byte) {
+  if ((first_byte & 0x80) == 0x00)
+    return 1; // 0xxxxxxx (ASCII)
+  else if ((first_byte & 0xE0) == 0xC0)
+    return 2; // 110xxxxx
+  else if ((first_byte & 0xF0) == 0xE0)
+    return 3; // 1110xxxx (中文常用)
+  else if ((first_byte & 0xF8) == 0xF0)
+    return 4; // 11110xxx
+  return 0;   // 无效格式，按单字节处理
+}
+
 void SSHClient::run() {
   qDebug() << "SSHClient ThreadId is" << QThread::currentThreadId();
 
@@ -293,7 +308,8 @@ void SSHClient::run() {
   fds[1].events = LIBSSH2_POLLFD_POLLHUP;
   char *buf = new char[READ_BUF_SIZE];
   int ret = 0;
-
+  char leftover[8] = {0}; // 用于保存不完整的多字节字符
+  int leftover_len = 0;
   while (true) {
     int act = 0;
     int rc = libssh2_poll(fds, 2, POLL_TIMEOUT);
@@ -307,11 +323,61 @@ void SSHClient::run() {
     }
     if (fds[0].revents & LIBSSH2_POLLFD_POLLIN) {
       act++;
-      ssize_t length = libssh2_channel_read(channel, buf, READ_BUF_SIZE);
+      ssize_t length = libssh2_channel_read(channel, buf + leftover_len,
+                                            READ_BUF_SIZE - leftover_len);
       if (length > 0) {
-        QByteArray buffer(buf, length);
-        QString data = QString::fromUtf8(buffer);
-        emit readChannelData(data);
+        // 计算实际数据长度
+        int data_len = leftover_len + length;
+        // 检查是否有不完整的UTF-8多字节字符
+        // UTF-8编码规则：
+        // 1字节字符: 0xxxxxxx
+        // 2字节字符: 110xxxxx 10xxxxxx
+        // 3字节字符: 1110xxxx 10xxxxxx 10xxxxxx
+        // 4字节字符: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        int valid_len = data_len;
+        while (valid_len > 0) {
+          // 检查最后一个字符是否完整
+          unsigned char c = buf[valid_len - 1];
+
+          // 如果是ASCII字符(0xxxxxxx)或多字节字符的起始字节(11xxxxxx)，则是完整的
+          if ((c & 0x80) == 0 || (c & 0xE0) == 0xC0 || (c & 0xF0) == 0xE0 ||
+              (c & 0xF8) == 0xF0) {
+            int expectedLength = utf8_char_length(c);
+            if (expectedLength > 0 &&
+                (valid_len - 1 + expectedLength) <= data_len) {
+              valid_len = valid_len - 1 + expectedLength;
+              break;
+            }
+          }
+          // 否则是多字节字符的后续字节(10xxxxxx)，可能不完整
+          valid_len--;
+        }
+
+        // 保存不完整的字符到leftover
+        if (valid_len < data_len) {
+          // 计算不完整字符的长度
+          int partial_len = data_len - valid_len;
+          // 复制到leftover
+          memcpy(leftover, buf + valid_len, partial_len);
+          leftover_len = partial_len;
+        }
+        // 如果有完整的字符可以处理
+        if (valid_len > 0) {
+          //          buf[valid_len] = '\0';
+          //          callback(buf, valid_len + 1);
+          QByteArray buffer(buf, valid_len);
+          QString data = QString::fromUtf8(buffer);
+          emit readChannelData(data);
+        }
+
+        if (leftover_len > 0) {
+          memcpy(buf, leftover, leftover_len);
+        }
+
+        if (valid_len == data_len) {
+          leftover_len = 0;
+        }
+
       } else if (length == LIBSSH2_ERROR_EAGAIN) {
         continue;
       } else {
