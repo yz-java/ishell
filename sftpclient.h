@@ -1,22 +1,22 @@
-#ifndef SFTPCLIENT_H
+﻿#ifndef SFTPCLIENT_H
 #define SFTPCLIENT_H
 
+#include "fileinfo.h"
+#include <QDebug>
+#include <QEventLoop>
+#include <QObject>
+#include <QString>
+#include <QThread>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <iostream>
 #include <libssh2.h>
 #include <libssh2_sftp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-
-#include <QDebug>
-#include <QEventLoop>
-#include <QObject>
-#include <QString>
-#include <QThread>
-#include <iostream>
 
 using namespace std;
 
@@ -36,7 +36,7 @@ using namespace std;
 #include "connectinfo.h"
 class SFTPClient : public QThread {
   Q_OBJECT
- public:
+public:
   explicit SFTPClient(ConnectInfo connectInfo);
   ~SFTPClient();
   bool connect();
@@ -55,13 +55,15 @@ class SFTPClient : public QThread {
 
   bool rename(QString sourceName, QString targetName);
 
-  //  void fileDownload(QString remotePath, QString localPath);
+  bool getFileStat(QString filePath, LIBSSH2_SFTP_ATTRIBUTES *attrs);
+
+  int getFileType(LIBSSH2_SFTP_ATTRIBUTES &attrs);
 
   void run();
 
   void stop();
 
- private:
+private:
   ConnectInfo connectInfo;
 
   int sock = 0;
@@ -73,14 +75,14 @@ class SFTPClient : public QThread {
 
   void close_connect();
 
- public slots:
+public slots:
   void scpUpload(QString filePath, QString remotePath);
 
   void scpDownload(QString filePath, QString remotePath);
 
   void opendir(QString sftpPath);
 
- signals:
+signals:
   void asyncScpUpload(QString filePath, QString remotePath);
 
   void asyncScpDownload(QString filePath, QString remotePath);
@@ -92,9 +94,9 @@ class SFTPClient : public QThread {
   void connectSuccess();
   void authSuccess();
 
-  void opendirCallBack(QString data);
+  void opendirCallBack(FileInfo_S info);
 
-  void opendirInfoCallBack(QString dirPath, QString data);
+  void opendirInfoCallBack(QString dirPath, FileInfo_S info);
 
   void initSftpSessionSuccess();
 
@@ -108,4 +110,4 @@ class SFTPClient : public QThread {
   void disconnected();
 };
 
-#endif  // SFTPCLIENT_H
+#endif // SFTPCLIENT_H

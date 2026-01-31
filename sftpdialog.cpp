@@ -47,7 +47,7 @@ void SftpDialog::initUI() {
   connect(treeView, &QTreeWidget::itemActivated,
           [&](QTreeWidgetItem *item, int column) { qDebug() << "回车"; });
 
-  treeView->setColumnCount(1);  // 设置列
+  treeView->setColumnCount(1); // 设置列
   treeView->hideColumn(6);
   treeView->setHeaderLabels(QStringList() << "文件名");
 
@@ -99,8 +99,8 @@ void SftpDialog::sftpConnect() {
     alertWindow->setContentText(msg);
     alertWindow->confirmButtonHide();
     alertWindow->setCancelButtonText("关闭");
-    connect(alertWindow, &AlertWindow::cancelEvent, this,
-            [=]() { this->close(); });
+    //    connect(alertWindow, &AlertWindow::cancelEvent, this,
+    //            [=]() { this->close(); });
     alertWindow->show();
   });
   connect(sftpClient, &SFTPClient::successMsg, this,
@@ -119,11 +119,10 @@ void SftpDialog::sftpConnect() {
             }
           });
   connect(sftpClient, &SFTPClient::opendirInfoCallBack, this,
-          [=](QString currentPath, QString data) {
+          [=](QString currentPath, FileInfo_S info) {
             if (!refresh) {
               return;
             }
-            FileInfo_S info = parseBySftpData(data);
             if (info.fileName == "." || info.fileName == "..") {
               return;
             }

@@ -13,8 +13,7 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
   setAcceptDrops(true);
   this->sftpClient = sftpClient;
   //    setAutoFillBackground(true);
-  connect(sftpClient, &SFTPClient::opendirCallBack, this, [=](QString data) {
-    FileInfo_S info = parseBySftpData(data);
+  connect(sftpClient, &SFTPClient::opendirCallBack, this, [=](FileInfo_S info) {
     if (info.fileName == "." || info.fileName == "..") {
       return;
     }
@@ -444,7 +443,9 @@ bool FolderItemWidget::eventFilter(QObject *obj, QEvent *e) {
   if (e->type() == QEvent::KeyPress &&
       ((QKeyEvent *)e)->key() == Qt::Key_Delete) {
     QList<QTreeWidgetItem *> items = treeView->selectedItems();
-    deleteQTreeWidgetItems(items);
+    if (!items.isEmpty()) {
+      deleteQTreeWidgetItems(items);
+    }
     return QWidget::eventFilter(obj, event);
   }
   if (event == nullptr) {
