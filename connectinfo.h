@@ -1,4 +1,4 @@
-﻿#ifndef CONNECTINFO_H
+#ifndef CONNECTINFO_H
 #define CONNECTINFO_H
 #include <QString>
 #include <QJsonObject>
@@ -6,6 +6,11 @@
 #ifdef WIN32
 #pragma execution_character_set("utf-8")
 #endif
+
+enum class AuthType {
+    Password = 1,
+    PublicKey = 2
+};
 
 class ConnectInfo
 {

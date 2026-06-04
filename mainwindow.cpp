@@ -110,6 +110,11 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index) {
     console->close();
   }
 
+  if (type == "sftp") {
+    SftpDialog *dialog = (SftpDialog *)ui->tabWidget->widget(index);
+    dialog->close();
+  }
+
   ui->tabWidget->removeTab(index);
 }
 
@@ -181,6 +186,7 @@ void MainWindow::openRDPConnect(ConnectInfo connectInfo) {
 
 void MainWindow::openSFTPConnect(ConnectInfo connectInfo) {
   SftpDialog *sftpDialog = new SftpDialog(this, connectInfo);
+  sftpDialog->setProperty("type", "sftp");
   //  sftpDialog->show();
   int count = ui->tabWidget->count();
   ui->tabWidget->insertTab(count, sftpDialog, QIcon(":/icons/folder.png"),

@@ -1,4 +1,4 @@
-﻿#ifndef SFTPCLIENT_H
+#ifndef SFTPCLIENT_H
 #define SFTPCLIENT_H
 
 #include "fileinfo.h"
@@ -34,6 +34,8 @@ using namespace std;
 #endif
 
 #include "connectinfo.h"
+#include <atomic>
+#include <thread>
 class SFTPClient : public QThread {
   Q_OBJECT
 public:
@@ -72,6 +74,9 @@ private:
   int rc = 0;
   LIBSSH2_SESSION *session = NULL;
   LIBSSH2_SFTP *sftp_session = NULL;
+
+  std::thread pollThread;
+  std::atomic<bool> running{true};
 
   void close_connect();
 

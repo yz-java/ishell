@@ -1,16 +1,10 @@
 ﻿#include "sftpclient.h"
 
-#include <QEventLoop>
 #include <QFile>
 #include <QHostInfo>
-#include <QMutex>
-#include <QTimer>
-#include <QtConcurrent>
 #include <thread>
 
 #define BUFFER_SIZE 1048576
-
-QMutex mutexlock;
 
 static int waitsocket(libssh2_socket_t socket_fd, LIBSSH2_SESSION *session) {
   struct timeval timeout;
@@ -72,6 +66,10 @@ SFTPClient::SFTPClient(ConnectInfo connectInfo) : QThread() {
 bool SFTPClient::connect() {
   qDebug() << "开始连接";
   sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
+    emit errorMsg("Socket创建失败!");
+    return false;
+  }
   unsigned long ul = 1;
 #ifdef Q_OS_UNIX
   int keepalive = 1;
@@ -94,8 +92,12 @@ bool SFTPClient::connect() {
   sin.sin_family = AF_INET;
   sin.sin_port = htons(connectInfo.port);
   QHostInfo info = QHostInfo::fromName(connectInfo.hostName);
+  if (info.addresses().isEmpty()) {
+    emit errorMsg("无法解析主机地址!");
+    return false;
+  }
   QString hostName = info.addresses().first().toString();
-  sin.sin_addr.s_addr = inet_addr(hostName.toStdString().data());
+  sin.sin_addr.s_addr = inet_addr(hostName.toUtf8().constData());
   int ret =
       ::connect(sock, (struct sockaddr *)&sin, sizeof(struct sockaddr_in));
   ret = waitsocket(sock, 30);
@@ -126,8 +128,8 @@ bool SFTPClient::openSession() {
 bool SFTPClient::auth() {
   qDebug() << "开始认证";
   std::string un = connectInfo.username.toStdString();
-  int authType = connectInfo.authType;
-  if (authType == 1) {
+  AuthType authType = static_cast<AuthType>(connectInfo.authType);
+  if (authType == AuthType::Password) {
     std::string p = connectInfo.password.toStdString();
     while ((rc = libssh2_userauth_password(session, un.data(), p.data())) ==
            LIBSSH2_ERROR_EAGAIN) {
@@ -139,9 +141,7 @@ bool SFTPClient::auth() {
       close_connect();
       return false;
     }
-  }
-
-  if (authType == 2) {
+  } else if (authType == AuthType::PublicKey) {
     std::string pkf = connectInfo.publicKeyPath.toStdString();
     std::string pvkf = connectInfo.privateKeyPath.toStdString();
     std::string pp = connectInfo.passPhrase.toStdString();
@@ -156,6 +156,12 @@ bool SFTPClient::auth() {
       close_connect();
       return false;
     }
+  } else {
+    fprintf(stderr, "Unknown authentication type: %d\n",
+            static_cast<int>(authType));
+    emit errorMsg("未知的认证类型!");
+    close_connect();
+    return false;
   }
   emit authSuccess();
   qDebug() << "认证成功";
@@ -186,9 +192,9 @@ void SFTPClient::opendir(QString sftpPath) {
   emit opendirEvent(sftpPath);
   qDebug() << "opendir ThreadId is" << QThread::currentThreadId();
   LIBSSH2_SFTP_HANDLE *sftp_handle;
+  QByteArray pathBytes = sftpPath.toUtf8();
   do {
-    sftp_handle =
-        libssh2_sftp_opendir(sftp_session, sftpPath.toStdString().data());
+    sftp_handle = libssh2_sftp_opendir(sftp_session, pathBytes.constData());
     if (!sftp_handle) {
       if (libssh2_session_last_errno(session) != LIBSSH2_ERROR_EAGAIN) {
         fprintf(stderr, "Unable to open file with SFTP: %ld\n",
@@ -251,35 +257,25 @@ void SFTPClient::run() {
   if (!this->initSftpSession()) {
     return;
   }
-  std::thread t([=]() {
-    LIBSSH2_POLLFD *fds = NULL;
-    if ((fds = static_cast<LIBSSH2_POLLFD *>(malloc(sizeof(LIBSSH2_POLLFD)))) ==
-        NULL) {
-      return;
+  pollThread = std::thread([this]() {
+    LIBSSH2_POLLFD fds;
+    fds.type = LIBSSH2_POLLFD_SOCKET;
+    fds.fd.socket = sock;
+    fds.events = LIBSSH2_POLLFD_POLLHUP;
+    while (running.load() && libssh2_poll(&fds, 1, 1000) == 0) {
+      // 等待连接断开
     }
-    fds[0].type = LIBSSH2_POLLFD_SOCKET;
-    fds[0].fd.socket = sock;
-    fds[0].events = LIBSSH2_POLLFD_POLLHUP;
-    while (true) {
-      int rc = libssh2_poll(fds, 1, 1000);
-      if (rc > 0) {
-        break;
-      }
-      continue;
+    if (running.load()) {
+      emit disconnected();
     }
-    if (fds) {
-      free(fds);
-      fds = NULL;
-    }
-    emit disconnected();
   });
-  t.detach();
   exec();
 }
 
 bool SFTPClient::mkdir(QString path) {
+  QByteArray pathBytes = path.toUtf8();
   while ((rc = libssh2_sftp_mkdir(
-              sftp_session, path.toStdString().data(),
+              sftp_session, pathBytes.constData(),
               LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
                   LIBSSH2_SFTP_S_IXGRP | LIBSSH2_SFTP_S_IROTH |
                   LIBSSH2_SFTP_S_IXOTH)) == LIBSSH2_ERROR_EAGAIN) {
@@ -296,8 +292,9 @@ bool SFTPClient::mkdir(QString path) {
 
 bool SFTPClient::rmdir(QString path) {
   LIBSSH2_SFTP_HANDLE *sftp_handle;
+  QByteArray pathBytes = path.toUtf8();
   do {
-    sftp_handle = libssh2_sftp_opendir(sftp_session, path.toStdString().data());
+    sftp_handle = libssh2_sftp_opendir(sftp_session, pathBytes.constData());
     if (!sftp_handle) {
       if (libssh2_session_last_errno(session) != LIBSSH2_ERROR_EAGAIN) {
         fprintf(stderr, "Unable to open file with SFTP: %ld\n",
@@ -339,13 +336,10 @@ bool SFTPClient::rmdir(QString path) {
          LIBSSH2_ERROR_EAGAIN) {
     waitsocket(sock, session);
   }
-  //  if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL) {
-  //    emit errorMsg("不能删除非空目录!");
-  //    return false;
-  //  }
   if (rc) {
     fprintf(stderr, "libssh2_sftp_rmdir failed: %d\n", rc);
     emit errorMsg("删除失败");
+    libssh2_sftp_closedir(sftp_handle);
     return false;
   }
   libssh2_sftp_closedir(sftp_handle);
@@ -367,12 +361,12 @@ bool SFTPClient::removeFile(QString path) {
 
 bool SFTPClient::rename(QString sourceName, QString targetName) {
   while ((rc = libssh2_sftp_rename(
-              sftp_session, sourceName.toStdString().data(),
-              targetName.toStdString().data())) == LIBSSH2_ERROR_EAGAIN) {
+              sftp_session, sourceName.toUtf8().constData(),
+              targetName.toUtf8().constData())) == LIBSSH2_ERROR_EAGAIN) {
     waitsocket(sock, session);
   }
   if (rc) {
-    fprintf(stderr, "libssh2_sftp_mkdir failed: %d\n", rc);
+    fprintf(stderr, "libssh2_sftp_rename failed: %d\n", rc);
     emit errorMsg("重命名失败");
     return false;
   }
@@ -380,7 +374,7 @@ bool SFTPClient::rename(QString sourceName, QString targetName) {
 }
 
 bool SFTPClient::getFileStat(QString filePath, LIBSSH2_SFTP_ATTRIBUTES *attrs) {
-  while ((rc = libssh2_sftp_stat(sftp_session, filePath.toStdString().data(),
+  while ((rc = libssh2_sftp_stat(sftp_session, filePath.toUtf8().constData(),
                                  attrs)) == LIBSSH2_ERROR_EAGAIN) {
     waitsocket(sock, session);
   }
@@ -412,12 +406,11 @@ int SFTPClient::getFileType(LIBSSH2_SFTP_ATTRIBUTES &attrs) {
 }
 
 void SFTPClient::scpUpload(QString filePath, QString remotePath) {
-  struct stat fileinfo;
-  stat(filePath.toStdString().data(), &fileinfo);
   LIBSSH2_SFTP_HANDLE *sftp_handle;
+  QByteArray remoteBytes = remotePath.toUtf8();
   do {
     sftp_handle = libssh2_sftp_open(
-        sftp_session, remotePath.toStdString().c_str(),
+        sftp_session, remoteBytes.constData(),
         LIBSSH2_FXF_WRITE | LIBSSH2_FXF_CREAT | LIBSSH2_FXF_TRUNC,
         LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
             LIBSSH2_SFTP_S_IROTH);
@@ -433,15 +426,16 @@ void SFTPClient::scpUpload(QString filePath, QString remotePath) {
   QFile f(filePath);
   if (!f.open(QIODevice::ReadOnly)) {
     emit errorMsg("文件打开失败");
+    libssh2_sftp_close(sftp_handle);
     return;
   }
-  int fileSize = f.size();
-  int currentSize = 0;
-  char *data = new char[BUFFER_SIZE];
+  qint64 fileSize = f.size();
+  qint64 currentSize = 0;
+  QByteArray data(BUFFER_SIZE, 0);
   char *ptr;
   int readSize = 0;
-  while ((readSize = f.read(data, BUFFER_SIZE)) > 0) {
-    ptr = data;
+  while ((readSize = f.read(data.data(), BUFFER_SIZE)) > 0) {
+    ptr = data.data();
     do {
       while ((rc = libssh2_sftp_write(sftp_handle, ptr, readSize)) ==
              LIBSSH2_ERROR_EAGAIN) {
@@ -456,7 +450,6 @@ void SFTPClient::scpUpload(QString filePath, QString remotePath) {
       emit fileUploadProcess(fileSize, currentSize, process);
     } while (readSize);
   }
-  delete[] data;
   qDebug() << "已发送数据大小：" << currentSize;
   f.close();
   libssh2_sftp_close(sftp_handle);
@@ -466,9 +459,10 @@ void SFTPClient::scpUpload(QString filePath, QString remotePath) {
 void SFTPClient::scpDownload(QString remotePath, QString localPath) {
   LIBSSH2_SFTP_ATTRIBUTES attrs;
   LIBSSH2_SFTP_HANDLE *sftp_handle;
+  QByteArray remoteBytes = remotePath.toUtf8();
   do {
-    sftp_handle = libssh2_sftp_open(
-        sftp_session, remotePath.toStdString().c_str(), LIBSSH2_FXF_READ, 0);
+    sftp_handle = libssh2_sftp_open(sftp_session, remoteBytes.constData(),
+                                    LIBSSH2_FXF_READ, 0);
     if (!sftp_handle) {
       if (libssh2_session_last_errno(session) != LIBSSH2_ERROR_EAGAIN) {
         fprintf(stderr, "Unable to open file with SFTP: %ld\n",
@@ -487,6 +481,7 @@ void SFTPClient::scpDownload(QString remotePath, QString localPath) {
   }
   if (rc) {
     fprintf(stderr, "libssh2_sftp_fstat failed.\n");
+    libssh2_sftp_close(sftp_handle);
     return;
   }
 
@@ -494,31 +489,33 @@ void SFTPClient::scpDownload(QString remotePath, QString localPath) {
   bool isopen = file.open(QIODevice::WriteOnly);
   if (!isopen) {
     emit errorMsg("本地文件打开失败");
+    libssh2_sftp_close(sftp_handle);
     return;
   }
-  char *data = new char[BUFFER_SIZE];
+  QByteArray data(BUFFER_SIZE, 0);
   libssh2_uint64_t currentSize = 0;
   libssh2_uint64_t fileSize = attrs.filesize;
   do {
     /* read in a loop until we block */
-    while ((rc = libssh2_sftp_read(sftp_handle, data, BUFFER_SIZE)) ==
+    while ((rc = libssh2_sftp_read(sftp_handle, data.data(), BUFFER_SIZE)) ==
            LIBSSH2_ERROR_EAGAIN) {
       waitsocket(sock, session);
     }
     if (rc < 0) {
       emit errorMsg("文件下载失败");
+      file.close();
+      libssh2_sftp_close(sftp_handle);
       return;
     }
     if (rc == 0) {
       break;
     }
     currentSize += rc;
-    file.write(data, rc);
+    file.write(data.data(), rc);
     float process = currentSize / (fileSize * 1.0);
     emit fileDownloadProcess(fileSize, currentSize, process);
   } while (rc > 0);
 
-  delete[] data;
   file.close();
   libssh2_sftp_close(sftp_handle);
   emit fileDownloadSuccess();
@@ -533,6 +530,7 @@ void SFTPClient::close_connect() {
 }
 
 void SFTPClient::stop() {
+
   if (sftp_session) {
     libssh2_sftp_shutdown(sftp_session);
     sftp_session = NULL;
@@ -545,18 +543,12 @@ void SFTPClient::stop() {
     session = NULL;
   }
   close_connect();
+  running.store(false);
+  if (pollThread.joinable()) {
+    pollThread.join();
+  }
   quit();
   wait();
 }
 
-SFTPClient::~SFTPClient() {
-  if (sftp_session) {
-    libssh2_sftp_shutdown(sftp_session);
-  }
-
-  if (session) {
-    libssh2_session_disconnect(session,
-                               "Session Shutdown, Thank you for playing");
-    libssh2_session_free(session);
-  }
-}
+SFTPClient::~SFTPClient() { stop(); }

@@ -12,9 +12,8 @@
 
 SftpDialog::SftpDialog(QWidget *parent, ConnectInfo connectInfo)
     : QWidget(parent) {
+  setAttribute(Qt::WA_DeleteOnClose);
   this->connectInfo = connectInfo;
-  //  setWindowTitle(connectInfo->name + "-文件管理");
-  //  setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
   initUI();
   sftpConnect();
@@ -163,9 +162,6 @@ void SftpDialog::treeWidgetItemRefresh(QTreeWidgetItem *item) {
   sftpClient->asyncOpendir(currentPath);
 }
 
-void SftpDialog::closeEvent(QCloseEvent *event) {
-  sftpClient->stop();
-  QTimer::singleShot(100, [&]() { delete this; });
-}
+void SftpDialog::closeEvent(QCloseEvent *event) {}
 
 SftpDialog::~SftpDialog() { delete sftpClient; }
