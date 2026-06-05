@@ -11,7 +11,7 @@
 WebConsole::WebConsole(QWidget *parent, ConnectInfo *connectInfo)
     : QWidget(parent), ui(new Ui::WebConsole) {
   ui->setupUi(this);
-
+  setAttribute(Qt::WA_DeleteOnClose);
   this->connectInfo = *connectInfo;
   qDebug() << "QSslSocket=" << QSslSocket::sslLibraryBuildVersionString();
   // qDebug() << "OpenSSL支持情况:" << QSslSocket::supportsSsl();
@@ -142,9 +142,6 @@ void WebConsole::setChannelRequestPtySize(const QString &size) {
 
 void WebConsole::closeEvent(QCloseEvent *event) {
   webView->page()->runJavaScript("closews()");
-  if (sshClient) {
-    sshClient->stop();
-  }
 }
 
 void WebConsole::paintEvent(QPaintEvent *event) {

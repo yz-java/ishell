@@ -5,7 +5,6 @@
 #endif
 
 #include <QHostInfo>
-#include <QTimer>
 #define POLL_TIMEOUT 1000
 static int waitsocket(int socket_fd, LIBSSH2_SESSION *session) {
   struct timeval timeout;
@@ -53,9 +52,13 @@ SSHClient::SSHClient(QString hostName, QString port, QString username,
     : QThread() {
   this->hostName = hostName;
   QHostInfo info = QHostInfo::fromName(hostName);
-  hostName = info.addresses().first().toString();
-  this->hostaddr = inet_addr(hostName.toStdString().data());
-  this->port = htons(atoi(port.toStdString().data()));
+  if (info.addresses().isEmpty()) {
+    fprintf(stderr, "Failed to resolve hostname\n");
+    return;
+  }
+  QString resolvedHost = info.addresses().first().toString();
+  this->hostaddr = inet_addr(resolvedHost.toUtf8().constData());
+  this->port = htons(atoi(port.toUtf8().constData()));
   this->username = username;
   this->password = password;
   if (libssh2_init(0) != 0) {
@@ -69,9 +72,13 @@ SSHClient::SSHClient(QString hostName, QString port, QString username,
     : QThread() {
   this->hostName = hostName;
   QHostInfo info = QHostInfo::fromName(hostName);
-  hostName = info.addresses().first().toString();
-  this->hostaddr = inet_addr(hostName.toStdString().data());
-  this->port = htons(atoi(port.toStdString().data()));
+  if (info.addresses().isEmpty()) {
+    fprintf(stderr, "Failed to resolve hostname\n");
+    return;
+  }
+  QString resolvedHost = info.addresses().first().toString();
+  this->hostaddr = inet_addr(resolvedHost.toUtf8().constData());
+  this->port = htons(atoi(port.toUtf8().constData()));
   this->username = username;
   this->publicKeyPath = publicKeyPath;
   this->privateKeyPath = privateKeyPath;
@@ -82,9 +89,15 @@ SSHClient::SSHClient(QString hostName, QString port, QString username,
   }
 }
 
+SSHClient::~SSHClient() { stop(); }
+
 bool SSHClient::connect() {
   qDebug() << "开始连接";
   sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
+    emit errorMsg("Socket创建失败!");
+    return false;
+  }
   unsigned long ul = 1;
 #ifdef Q_OS_UNIX
   int keepalive = 1;
@@ -156,9 +169,7 @@ bool SSHClient::userauth() {
       waitsocket(sock, session);
     }
     errMsg = "Authentication by password failed";
-  }
-
-  if (authType == 2) {
+  } else if (authType == 2) {
     std::string pkf = publicKeyPath.toStdString();
     std::string pvkf = privateKeyPath.toStdString();
     std::string pp = passPhrase.toStdString();
@@ -168,6 +179,10 @@ bool SSHClient::userauth() {
       waitsocket(sock, session);
     }
     errMsg = "Authentication by public key failed";
+  } else {
+    fprintf(stderr, "Unknown authentication type: %d\n", authType);
+    emit errorMsg("未知的认证类型!");
+    return false;
   }
 
   if (rc) {
@@ -295,35 +310,30 @@ void SSHClient::run() {
     return;
   }
   emit connectSuccess();
-  LIBSSH2_POLLFD *fds = NULL;
-  if ((fds = static_cast<LIBSSH2_POLLFD *>(
-           malloc(sizeof(LIBSSH2_POLLFD) * 2))) == NULL) {
-    return;
-  }
+  LIBSSH2_POLLFD fds[2];
   fds[0].type = LIBSSH2_POLLFD_CHANNEL;
   fds[0].fd.channel = channel;
   fds[0].events = LIBSSH2_POLLFD_POLLIN | LIBSSH2_POLLFD_CHANNEL_CLOSED;
   fds[1].type = LIBSSH2_POLLFD_SOCKET;
   fds[1].fd.socket = sock;
   fds[1].events = LIBSSH2_POLLFD_POLLHUP;
-  char *buf = new char[READ_BUF_SIZE];
-  int ret = 0;
+  QByteArray buf(READ_BUF_SIZE, 0);
   char leftover[8] = {0}; // 用于保存不完整的多字节字符
   int leftover_len = 0;
-  while (true) {
+  while (running.load()) {
     int act = 0;
     int rc = libssh2_poll(fds, 2, POLL_TIMEOUT);
     if (rc < 1) {
       continue;
     }
-    if ((ret = libssh2_channel_eof(channel)) == 1) {
+    if (libssh2_channel_eof(channel) == 1) {
       emit readChannelData("\n目标主动断开连接");
       emit disconnected();
       break;
     }
     if (fds[0].revents & LIBSSH2_POLLFD_POLLIN) {
       act++;
-      ssize_t length = libssh2_channel_read(channel, buf + leftover_len,
+      ssize_t length = libssh2_channel_read(channel, buf.data() + leftover_len,
                                             READ_BUF_SIZE - leftover_len);
       if (length > 0) {
         // 计算实际数据长度
@@ -358,20 +368,18 @@ void SSHClient::run() {
           // 计算不完整字符的长度
           int partial_len = data_len - valid_len;
           // 复制到leftover
-          memcpy(leftover, buf + valid_len, partial_len);
+          memcpy(leftover, buf.data() + valid_len, partial_len);
           leftover_len = partial_len;
         }
         // 如果有完整的字符可以处理
         if (valid_len > 0) {
-          //          buf[valid_len] = '\0';
-          //          callback(buf, valid_len + 1);
-          QByteArray buffer(buf, valid_len);
+          QByteArray buffer(buf.data(), valid_len);
           QString data = QString::fromUtf8(buffer);
           emit readChannelData(data);
         }
 
         if (leftover_len > 0) {
-          memcpy(buf, leftover, leftover_len);
+          memcpy(buf.data(), leftover, leftover_len);
         }
 
         if (valid_len == data_len) {
@@ -396,17 +404,14 @@ void SSHClient::run() {
       }
     }
   }
-  if (fds) {
-    free(fds);
-    fds = NULL;
-  }
-  delete[] buf;
-  this->stop();
+  // this->stop();
 }
 
 void SSHClient::stop() {
-  //  QTimer::singleShot(POLL_TIMEOUT, [=]() {});
+  running.store(false);
   free_channel();
   close_session();
   close_connect();
+  quit();
+  wait();
 }

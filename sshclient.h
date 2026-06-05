@@ -36,6 +36,10 @@ public:
   SSHClient(QString hostName, QString port, QString username,
             QString publicKeyPath, QString privateKeyPath, QString passPhrase);
 
+  ~SSHClient();
+
+  std::atomic<bool> running{true};
+
   int pty_rows = 0;
 
   int pty_cols = 0;

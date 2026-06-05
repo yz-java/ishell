@@ -184,9 +184,9 @@ FolderItemWidget::FolderItemWidget(QWidget *parent, SFTPClient *sftpClient)
               QString filePath = item->text(6);
               QFileInfo fileInfo(filePath);
               QString newFileName = newName;
-              if (info.fileType == 2) {
-                newFileName += "." + fileInfo.suffix();
-              }
+              // if (info.fileType == 2) {
+              //   newFileName += "." + fileInfo.suffix();
+              // }
               QString targetPathName =
                   fileInfo.absolutePath() + "/" + newFileName;
               qDebug() << filePath << " to " << targetPathName;
@@ -275,7 +275,7 @@ void FolderItemWidget::popMenu(const QPoint &p) {
       QString filePath = curItem->text(6);
       QFileInfo fileInfo(filePath);
       confirmDialog->setTitleText("请输入文件名");
-      confirmDialog->setEditText(fileInfo.baseName());
+      confirmDialog->setEditText(fileInfo.fileName());
       confirmDialog->setOkButtonName("修改");
       fileOption = FileOption::RENAME;
       confirmDialog->show();
@@ -433,7 +433,7 @@ bool FolderItemWidget::eventFilter(QObject *obj, QEvent *e) {
       QString filePath = item->text(6);
       QFileInfo fileInfo(filePath);
       confirmDialog->setTitleText("请输入文件名");
-      confirmDialog->setEditText(fileInfo.baseName());
+      confirmDialog->setEditText(fileInfo.fileName());
       confirmDialog->setOkButtonName("修改");
       fileOption = FileOption::RENAME;
       confirmDialog->show();

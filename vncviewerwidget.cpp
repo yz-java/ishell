@@ -13,17 +13,17 @@
 #include <QWheelEvent>
 
 static GLfloat vertices[] = {
-    -1.0f, 1.0f,  0.0f,  // Top-left
-    -1.0f, -1.0f, 0.0f,  // Bottom-left
-    1.0f,  1.0f,  0.0f,  // Top-right
-    1.0f,  -1.0f, 0.0f   // Bottom-right
+    -1.0f, 1.0f,  0.0f, // Top-left
+    -1.0f, -1.0f, 0.0f, // Bottom-left
+    1.0f,  1.0f,  0.0f, // Top-right
+    1.0f,  -1.0f, 0.0f  // Bottom-right
 };
 
 static GLfloat texCoords[] = {
-    0.0f, 0.0f,  // Bottom-left
-    0.0f, 1.0f,  // Top-left
-    1.0f, 0.0f,  // Bottom-right
-    1.0f, 1.0f   // Top-right
+    0.0f, 0.0f, // Bottom-left
+    0.0f, 1.0f, // Top-left
+    1.0f, 0.0f, // Bottom-right
+    1.0f, 1.0f  // Top-right
 };
 
 VncViewerWidget::VncViewerWidget(QWidget *parent, ConnectInfo info)
@@ -41,7 +41,8 @@ VncViewerWidget::VncViewerWidget(QWidget *parent, ConnectInfo info)
   });
   connect(client, &VncClient::updateImageEvent, this,
           [=](QImage img, int x, int y, int w, int h) {
-            this->img = img;
+            memcpy(this->frameBuffer, img.bits(),
+                   this->width * this->height * 4);
             repaint(x, y, w, h);
           });
   connect(client, &VncClient::frameUpdateEvent, this,
@@ -120,9 +121,12 @@ void VncViewerWidget::mouseMoveEvent(QMouseEvent *ev) {
 }
 
 void VncViewerWidget::mousePressEvent(QMouseEvent *e) {
-  if (e->button() & Qt::LeftButton) buttonMask |= 0x01;
-  if (e->button() & Qt::MidButton) buttonMask |= 0x02;
-  if (e->button() & Qt::RightButton) buttonMask |= 0x04;
+  if (e->button() & Qt::LeftButton)
+    buttonMask |= 0x01;
+  if (e->button() & Qt::MidButton)
+    buttonMask |= 0x02;
+  if (e->button() & Qt::RightButton)
+    buttonMask |= 0x04;
   int x = e->x();
   int y = e->y();
   client->sendPointerEvent(x, y, buttonMask);
@@ -130,9 +134,12 @@ void VncViewerWidget::mousePressEvent(QMouseEvent *e) {
 }
 
 void VncViewerWidget::mouseReleaseEvent(QMouseEvent *e) {
-  if (e->button() & Qt::LeftButton) buttonMask &= 0xfe;
-  if (e->button() & Qt::MidButton) buttonMask &= 0xfd;
-  if (e->button() & Qt::RightButton) buttonMask &= 0xfb;
+  if (e->button() & Qt::LeftButton)
+    buttonMask &= 0xfe;
+  if (e->button() & Qt::MidButton)
+    buttonMask &= 0xfd;
+  if (e->button() & Qt::RightButton)
+    buttonMask &= 0xfb;
   int x = e->x();
   int y = e->y();
   client->sendPointerEvent(x, y, buttonMask);
@@ -169,7 +176,7 @@ bool VncViewerWidget::eventFilter(QObject *watched, QEvent *event) {
   if (event->type() == QEvent::Close) {
     client->close();
     glDeleteTextures(1, &texture);
-    this->close();
+    // this->close();
   }
 
   return QWidget::eventFilter(watched, event);

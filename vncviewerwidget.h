@@ -14,7 +14,6 @@ class VncViewerWidget : public QOpenGLWidget {
  private:
   ConnectInfo info;
   VncClient* client;
-  QImage img;
   int buttonMask = 0;
 
   QGLShaderProgram program;  // shader程序

@@ -1,6 +1,9 @@
 #include "vncclient.h"
 
 #include <QDebug>
+#include <QEventLoop>
+#include <QTimer>
+#include <thread>
 
 static rfbBool resize(rfbClient *client) {
   int width = client->width, height = client->height,
@@ -13,38 +16,38 @@ static rfbBool resize(rfbClient *client) {
   //  client->width = sdl->pitch / (depth / 8);
   c->colorDepth = depth;
   c->screenSizeEvent(width, height);
-  switch (depth) {
-    case 8:
-      client->format.depth = 8;
-      client->format.bitsPerPixel = 8;
-      client->format.redShift = 0;
-      client->format.greenShift = 3;
-      client->format.blueShift = 6;
-      client->format.redMax = 7;
-      client->format.greenMax = 7;
-      client->format.blueMax = 3;
-      break;
-    case 16:
-      client->format.depth = 16;
-      client->format.bitsPerPixel = 16;
-      client->format.redShift = 11;
-      client->format.greenShift = 5;
-      client->format.blueShift = 0;
-      client->format.redMax = 0x1f;
-      client->format.greenMax = 0x3f;
-      client->format.blueMax = 0x1f;
-      break;
-    case 32:
-    default:
-      client->format.depth = 24;
-      client->format.bitsPerPixel = 32;
-      client->format.redShift = 0;
-      client->format.greenShift = 8;
-      client->format.blueShift = 16;
-      client->format.redMax = 0xff;
-      client->format.greenMax = 0xff;
-      client->format.blueMax = 0xff;
-  }
+  //  switch (depth) {
+  //    case 8:
+  //      client->format.depth = 8;
+  //      client->format.bitsPerPixel = 8;
+  //      client->format.redShift = 0;
+  //      client->format.greenShift = 3;
+  //      client->format.blueShift = 6;
+  //      client->format.redMax = 7;
+  //      client->format.greenMax = 7;
+  //      client->format.blueMax = 3;
+  //      break;
+  //    case 16:
+  //      client->format.depth = 16;
+  //      client->format.bitsPerPixel = 16;
+  //      client->format.redShift = 11;
+  //      client->format.greenShift = 5;
+  //      client->format.blueShift = 0;
+  //      client->format.redMax = 0x1f;
+  //      client->format.greenMax = 0x3f;
+  //      client->format.blueMax = 0x1f;
+  //      break;
+  //    case 32:
+  //    default:
+  //      client->format.depth = 24;
+  //      client->format.bitsPerPixel = 32;
+  //      client->format.redShift = 0;
+  //      client->format.greenShift = 8;
+  //      client->format.blueShift = 16;
+  //      client->format.redMax = 0xff;
+  //      client->format.greenMax = 0xff;
+  //      client->format.blueMax = 0xff;
+  //  }
 
   if (c->frameBuffer) {
     delete[] c->frameBuffer;
@@ -54,7 +57,7 @@ static rfbBool resize(rfbClient *client) {
   memset(c->frameBuffer, '\0', size);
   client->frameBuffer = c->frameBuffer;
 
-  SetFormatAndEncodings(client);
+  //  SetFormatAndEncodings(client);
   return TRUE;
 }
 
@@ -62,25 +65,26 @@ static void update(rfbClient *cl, int x, int y, int w, int h) {
   VncClient *c = (VncClient *)rfbClientGetClientData(cl, 0);
   Q_ASSERT(c);
 
-  //  const int width = cl->width, height = cl->height;
-  //  QImage img;
-  //  switch (c->colorDepth) {
-  //    case 8:
-  //      img = QImage(cl->frameBuffer, width, height, QImage::Format_Indexed8);
-  //      //      img.setColorTable(m_colorTable);
-  //      break;
-  //    case 16:
-  //      img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB16);
-  //      break;
-  //    case 32:
-  //      img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB32);
-  //      break;
-  //  }
+  //  if (cl->format.redShift == 16) {
+  //    const int width = cl->width, height = cl->height;
+  //    QImage img;
+  //    switch (c->colorDepth) {
+  //      case 8:
+  //        img = QImage(cl->frameBuffer, width, height,
+  //        QImage::Format_Indexed8); break;
+  //      case 16:
+  //        img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB16);
+  //        break;
+  //      case 32:
+  //        img = QImage(cl->frameBuffer, width, height, QImage::Format_RGB32);
+  //        break;
+  //    }
 
-  //  if (img.isNull()) {
-  //    qDebug() << "image not loaded";
+  //    img = img.rgbSwapped();
+  //    c->updateImageEvent(img, x, y, w, h);
+  //  } else {
+  //    c->frameUpdateEvent(cl->frameBuffer, x, y, w, h);
   //  }
-  //  c->updateImageEvent(img, x, y, w, h);
   c->frameUpdateEvent(cl->frameBuffer, x, y, w, h);
 }
 
@@ -97,12 +101,18 @@ VncClient::VncClient(QString hostName, int port, QString password) : QThread() {
 }
 
 void VncClient::close() {
-  running = false;
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  if (cl->sock) {
-    ::close(cl->sock);
+  running.store(false);
+  QEventLoop loop;
+  QTimer::singleShot(1000, &loop, SLOT(quit()));
+  loop.exec();
+  if (cl) {
+    rfbClientCleanup(cl);
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  if (m_vncThread != nullptr && m_vncThread->joinable()) {
+    m_vncThread->join();
+  }
+  quit();
+  wait();
   if (frameBuffer) {
     delete[] frameBuffer;
     frameBuffer = NULL;
@@ -119,19 +129,19 @@ void VncClient::sendKeyEvent(int key, bool upOrDown) {
 
 static void text_chat(rfbClient *cl, int value, char *text) {
   switch (value) {
-    case (int)rfbTextChatOpen:
-      fprintf(stderr, "TextChat: We should open a textchat window!\n");
-      TextChatOpen(cl);
-      break;
-    case (int)rfbTextChatClose:
-      fprintf(stderr, "TextChat: We should close our window!\n");
-      break;
-    case (int)rfbTextChatFinished:
-      fprintf(stderr, "TextChat: We should close our window!\n");
-      break;
-    default:
-      fprintf(stderr, "TextChat: Received \"%s\"\n", text);
-      break;
+  case (int)rfbTextChatOpen:
+    fprintf(stderr, "TextChat: We should open a textchat window!\n");
+    TextChatOpen(cl);
+    break;
+  case (int)rfbTextChatClose:
+    fprintf(stderr, "TextChat: We should close our window!\n");
+    break;
+  case (int)rfbTextChatFinished:
+    fprintf(stderr, "TextChat: We should close our window!\n");
+    break;
+  default:
+    fprintf(stderr, "TextChat: Received \"%s\"\n", text);
+    break;
   }
   fflush(stderr);
 }
@@ -146,10 +156,6 @@ static char *ReadPassword(rfbClient *cl) {
   memset(password, 0, c->password.size());
   memcpy(password, c->password.toLocal8Bit(), c->password.size());
   return password;
-}
-
-static void cleanup(rfbClient *cl) {
-  if (cl) rfbClientCleanup(cl);
 }
 
 void VncClient::run() {
@@ -170,25 +176,24 @@ void VncClient::run() {
   memset(host_name, '\0', hostName.size());
   memcpy(host_name, hostName.toLocal8Bit().data(), hostName.size());
   cl->serverHost = host_name;
+  cl->connectTimeout = 5;
 
   if (!rfbInitClient(cl, 0, NULL)) {
     return;
   }
-  std::thread t([=]() {
+  m_vncThread = new std::thread([=]() {
     int i = 0;
-    while (running) {
+    while (running.load()) {
       i = WaitForMessage(cl, 500);
       if (i < 0) {
-        cleanup(cl);
         break;
       }
       if (i)
         if (!HandleRFBServerMessage(cl)) {
-          cleanup(cl);
           break;
         }
     }
+    qDebug() << "VncClient::run() exit";
   });
-  t.detach();
   exec();
 }
